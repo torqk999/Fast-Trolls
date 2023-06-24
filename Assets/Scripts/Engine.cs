@@ -3,8 +3,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[Serializable]
+public class Quadrant : List<Bonom>
+{
+    public void AddBonom(Bonom newBonom)
+    {
+        newBonom.myQuad = this;
+        Add(newBonom);
+    }
+
+    public bool RemoveBonom(Bonom newBonom)
+    {
+        newBonom.myQuad = null;
+        return Remove(newBonom);
+    }
+}
+
 public class Engine : MonoBehaviour
 {
+    public Quadrant[,] QuadMap;
+    private int xRoot, zRoot;
+    public int QuadResolution;
+
     public List<Bonom> Dead = new List<Bonom>();
 
     public Team[] Teams;
@@ -22,20 +42,51 @@ public class Engine : MonoBehaviour
     public CameraControl CameraControl;
 
     public long BodyExpirationTicks;
+    public float body_exp_inverse;
     public long SpawnDelayTicks;
     public long RegenDelayTicks;
     public bool Named;
     public Team SelectedTeam => Teams[SelectedTeamIndex];
 
-    /*public List<Bonom> GetEnemies(int teamIndex)
+    public Quadrant GetQuad(Vector3 coordinates)
     {
-        List<Bonom> request_buffer = new List<Bonom>();
-        foreach (Team team in Teams)
-            if (team.TeamIndex != teamIndex)
-                request_buffer.AddRange(team.Members);
-        return request_buffer;
-    }*/
+        int xTarget = ((int)coordinates.x / QuadResolution) + xRoot;
+        int zTarget = ((int)coordinates.z / QuadResolution) + zRoot;
 
+        if (xTarget < 0 || xTarget >= QuadMap.GetLength(0) ||
+            zTarget < 0 || zTarget >= QuadMap.GetLength(1))
+        {
+            ExpandMap(xTarget, zTarget);
+            xTarget = ((int)coordinates.x / QuadResolution) + xRoot;
+            zTarget = ((int)coordinates.z / QuadResolution) + zRoot;
+        }
+
+        return QuadMap[xTarget, zTarget];
+    }
+    private void ExpandMap(int x, int z)
+    {
+        int xInit = QuadMap.GetLength(0);
+        int zInit = QuadMap.GetLength(1);
+        int xWidth = x < 0 ? xInit - x : x >= xInit ? x : xInit;
+        int zWidth = z < 0 ? zInit - z : z >= zInit ? z : zInit;
+        int xOffset = x < 0 ? -x : 0;
+        int zOffset = z < 0 ? -z : 0;
+        xRoot -= x < 0 ? x : 0;
+        zRoot -= z < 0 ? z : 0;
+
+        Quadrant[,] newMap = new Quadrant[xWidth, zWidth];
+
+        for(int X = 0; X < xWidth; X++)
+            for(int Z = 0; Z < zWidth; Z++)
+            {
+                newMap[X, Z] =
+                (X >= xOffset && X < xOffset + xWidth && Z >= zOffset && Z < zOffset + zWidth) ?
+                QuadMap[X - xOffset, Z - zOffset] :
+                new Quadrant();
+            }
+
+        QuadMap = newMap;
+    }
     public Vector3 SpawnLocation(int teamIndex)
     {
         Vector3 location = SpawnLocations[teamIndex].position;
@@ -51,7 +102,6 @@ public class Engine : MonoBehaviour
         AOEDamage(attacker, target);
         attacker.myTeam.KillCount += target.Health <= 0 ? 1 : 0;
     }
-
     private void DamageBonom(Bonom attacker, Bonom target)
     {
         float dmg = attacker.Stats.AttkDamage;
@@ -59,7 +109,6 @@ public class Engine : MonoBehaviour
         target.myTeam.DamageRecieved += dmg;
         attacker.myTeam.DamageDealt += dmg;
     }
-
     private void KnockBonom(Bonom attacker, Bonom target, Vector3 source)
     {
         if (target.myRigidBody == null ||
@@ -71,10 +120,8 @@ public class Engine : MonoBehaviour
 
         target.myRigidBody.AddForce(knockBack + knockUp, ForceMode.Impulse);
     }
-
     private void AOEDamage(Bonom attacker, Bonom target)
     {
-        //List<Bonom> enemies = GetEnemies(attacker.myTeam.TeamIndex);
         int damagedCount = 0;
         foreach (Bonom enemy in attacker.myTeam.Enemies)
         {
@@ -86,7 +133,6 @@ public class Engine : MonoBehaviour
                 damagedCount++;
             }
         }
-        Debug.Log($"Total hit: {damagedCount}");
     }
 
     public BonomStats RandomBonomStats()
@@ -119,11 +165,17 @@ public class Engine : MonoBehaviour
                 enemyTeam.AddEnemy(newBonom);
 
         newBonomObject.transform.position = SpawnLocation(requestingTeam.TeamIndex);
+        GetQuad(newBonomObject.transform.position).Add(newBonom);
+
         if (newBonom.Stats.Prefab != null)
-            Instantiate(newBonom.Stats.Prefab, newBonomObject.transform);
+        {
+            GameObject newMeshObject = Instantiate(newBonom.Stats.Prefab, newBonomObject.transform.position, newBonomObject.transform.rotation, newBonomObject.transform);
+            newMeshObject.SetActive(true);
+            newMeshObject.GetComponent<Renderer>().material.color = newBonom.myTeam.TeamColor;
+        }
+            
         
     }
-
     public Flag GenerateTeamFlag(Team requestingTeam)
     {
         GameObject newFlagObject = Instantiate(PrefabFlag.gameObject);
@@ -133,12 +185,10 @@ public class Engine : MonoBehaviour
         newFlagObject.transform.position = SpawnLocations[requestingTeam.TeamIndex].position;
         return newFlag;
     }
-
     private Color RandomColorGenerator()
     {
         return new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
     }
-
     private void SpawnUpdate()
     {
         foreach (Team team in Teams)
@@ -166,32 +216,6 @@ public class Engine : MonoBehaviour
         return true;
     }
 
-    /*private void DeadUpdate()
-    {
-        if (Dead.Count < 1)
-            return;
-
-        if (Dead[0] == null ||
-            Dead[0].Alive)
-        {
-            Dead.RemoveAt(0);
-            return;
-        }
-
-        if (Dead[0].DeathTime + new TimeSpan(BodyExpirationTicks) < DateTime.Now)
-        {
-            foreach (Team enemyTeam in Teams)
-                if (enemyTeam != Dead[0].myTeam)
-                    enemyTeam.RemoveEnemy(Dead[0]);
-
-            Dead[0].myTeam.RemoveBonom(Dead[0]);
-
-            //Dead[0].myTeam.Members.Remove(Dead[0]);
-            Destroy(Dead[0].gameObject);
-            Dead.RemoveAt(0);
-        }
-    }*/
-
     public void MoveSelectedFlag(Vector3 newLocation)
     {
         Teams[SelectedTeamIndex].Flag.transform.position = newLocation;
@@ -203,6 +227,7 @@ public class Engine : MonoBehaviour
         if (SpawnLocations == null)
             return;
 
+        QuadMap = new Quadrant[0, 0];
         Teams = new Team[SpawnLocations.Length];
 
         for (int i = 0; i < SpawnLocations.Length; i++)
@@ -224,12 +249,13 @@ public class Engine : MonoBehaviour
         UIManager.PopulateRatioSliderPanels();
         UIManager.PopulateSquadCounterTexts();
         UIManager.TeamSelection(SelectedTeamIndex);
+
+        body_exp_inverse = 1f / BodyExpirationTicks;
     }
 
     // Update is called once per frame
     void Update()
     {
         SpawnUpdate();
-        //DeadUpdate();
     }
 }
