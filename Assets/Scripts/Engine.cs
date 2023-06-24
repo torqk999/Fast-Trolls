@@ -19,9 +19,11 @@ public class Engine : MonoBehaviour
     public Bonom PrefabBonom;
     public Flag PrefabFlag;
     public UIManager UIManager;
+    public CameraControl CameraControl;
 
-    public int BodyExpirationSeconds;
-    public int SpawnDelaySeconds;
+    public long BodyExpirationTicks;
+    public long SpawnDelayTicks;
+    public long RegenDelayTicks;
     public bool Named;
     public Team SelectedTeam => Teams[SelectedTeamIndex];
 
@@ -116,7 +118,7 @@ public class Engine : MonoBehaviour
             if (team.Members.Count >= MemberCount)
                 continue;
 
-            if (team.LastSpawn + new TimeSpan(0,0,0,SpawnDelaySeconds) > DateTime.Now)
+            if (team.LastSpawn + new TimeSpan(SpawnDelayTicks) > DateTime.Now)
                 continue;
 
             team.LastSpawn = DateTime.Now;
@@ -136,7 +138,7 @@ public class Engine : MonoBehaviour
             return;
         }
 
-        if (Dead[0].DeathTime + new TimeSpan(0,0,0,BodyExpirationSeconds) < DateTime.Now)
+        if (Dead[0].DeathTime + new TimeSpan(BodyExpirationTicks) < DateTime.Now)
         {
             Dead[0].myTeam.RemoveBonom(Dead[0]);
             //Dead[0].myTeam.Members.Remove(Dead[0]);

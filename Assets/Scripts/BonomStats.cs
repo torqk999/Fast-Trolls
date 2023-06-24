@@ -17,12 +17,12 @@ public struct BonomStats
     public GameObject Prefab;
 
     public int RowPriority;
-    public float ThreatThreshold;
-    public float AggroRange;
+    public long AttkDelayTicks;
     public float AttkRange;
     public float AttkRadius;
-    public int AttkSpeed;
     public float AttkDamage;
+    public float ThreatThreshold;
+    public float AggroRange;
     public float HealthMax;
     public float HealthRegen;
     public float MoveSpeed;
@@ -32,28 +32,31 @@ public struct BonomStats
         BonomType bonomType,
         Sprite bonomSprite,
         GameObject prefab,
+
         int rowPriority,
-        float threatThreshold,
-        float aggroRange,
+        long attkDelayTicks,
         float attkRange,
         float attkRadius,
         float attkDamage,
+        float threatThreshold,
+        float aggroRange,
         float healthMax,
         float healthRegen,
         float moveSpeed,
-        float turnSpeed,
-        int attkSpeed)
+        float turnSpeed
+        )
     {
         Type = bonomType;
         Sprite = bonomSprite;
         Prefab = prefab;
+
         RowPriority = rowPriority;
-        ThreatThreshold = threatThreshold;
-        AggroRange = aggroRange;
+        AttkDelayTicks = attkDelayTicks;
         AttkRange = attkRange;
         AttkRadius = attkRadius;
-        AttkSpeed = attkSpeed;
         AttkDamage = attkDamage;
+        ThreatThreshold = threatThreshold;
+        AggroRange = aggroRange;
         HealthMax = healthMax;
         HealthRegen = healthRegen;
         MoveSpeed = moveSpeed;

@@ -213,7 +213,9 @@ public class UIManager : MonoBehaviour
             if (!Physics.Raycast(ray, out result, ClickRayCastDistance))
                 return;
 
-            Vector3 newFlagLocation = result.point + FlagGroundOffset;
+            Vector3 newFlagLocation = result.point;
+            newFlagLocation.y = 0;
+            newFlagLocation += FlagGroundOffset;
             Engine.MoveSelectedFlag(newFlagLocation);
         }
     }
