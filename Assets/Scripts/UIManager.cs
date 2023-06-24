@@ -183,6 +183,16 @@ public class UIManager : MonoBehaviour
         SelectedTeamStats.text = $"DmgDealt: {Engine.SelectedTeam.DamageDealt} | DmgRecieved: {Engine.SelectedTeam.DamageRecieved} \n DmgHealed: {Engine.SelectedTeam.DamageHealed} | KillCount: {Engine.SelectedTeam.KillCount}";
     }
 
+    private void NumberCheck()
+    {
+        for (int i = 0; i < TeamSelectors.Length; i++)
+            if (Input.GetKeyDown((KeyCode)(i + 48)))
+            {
+                TeamSelection(i);
+                return;
+            }
+    }
+
     private void ClickCheck()
     {
         if (Input.GetMouseButtonDown(0))
@@ -216,6 +226,7 @@ public class UIManager : MonoBehaviour
     private void Update()
     {
         ClickCheck();
+        NumberCheck();
         StatUpdate();
     }
 

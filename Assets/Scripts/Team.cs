@@ -40,14 +40,14 @@ public class Team
 
     private BonomStats NeededStats()
     {
-        Debug.Log("Needed Stats!");
+        //Debug.Log("Needed Stats!");
 
         for (int i = 0; i < Squads.Length; i++)
         {
             if (Squads[i].Ratio == 0)
                 continue;
 
-            Debug.Log($"squadType: {Squads[i].Type} | squadCount: {Squads[i].Count} | membersCount: {Members.Count}");
+            //Debug.Log($"squadType: {Squads[i].Type} | squadCount: {Squads[i].Count} | membersCount: {Members.Count}");
 
             float currentRatio = (float)Squads[i].Count / Members.Count;
 
@@ -55,7 +55,7 @@ public class Team
                 Squads[i].Count == 0 ||
                 currentRatio < Squads[i].Ratio)
             {
-                Debug.Log($"{Engine.PreSets[i].Type} was needed (Ratio/Current) : ({Squads[i].Ratio}/{currentRatio})");
+                //Debug.Log($"{Engine.PreSets[i].Type} was needed (Ratio/Current) : ({Squads[i].Ratio}/{currentRatio})");
                 return Engine.PreSets[i];
             }
                 
@@ -73,7 +73,7 @@ public class Team
 
         Engine.UIManager.CountUpdate(this);
 
-        Debug.Log($"{targetSquad.Type} : {targetSquad.Count}");
+        //Debug.Log($"{targetSquad.Type} : {targetSquad.Count}");
     }
 
     public void RemoveBonom(Bonom targetBonom)

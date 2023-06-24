@@ -46,11 +46,31 @@ public class Engine : MonoBehaviour
 
     public void AttackBonom(Bonom attacker, Bonom target)
     {
+        AOEDamage(attacker, target);
+        attacker.myTeam.KillCount += target.Health <= 0 ? 1 : 0;
+    }
+
+    private void DamageBonom(Bonom attacker, Bonom target)
+    {
         float dmg = attacker.Stats.AttkDamage;
         target.Health -= dmg;
         target.myTeam.DamageRecieved += dmg;
         attacker.myTeam.DamageDealt += dmg;
-        attacker.myTeam.KillCount += target.Health <= 0 ? 1 : 0;
+    }
+
+    private void AOEDamage(Bonom attacker, Bonom target)
+    {
+        List<Bonom> enemies = GetEnemies(attacker.myTeam.TeamIndex);
+        int damagedCount = 0;
+        foreach (Bonom enemy in enemies)
+        {
+            if (Vector3.Distance(enemy.transform.position, target.transform.position) <= attacker.Stats.AttkRadius)
+            {
+                DamageBonom(attacker, target);
+                damagedCount++;
+            }
+        }
+        Debug.Log($"Total hit: {damagedCount}");   
     }
 
     public BonomStats RandomBonomStats()

@@ -23,7 +23,7 @@ public class CameraControl : MonoBehaviour
         Camera.localPosition = new Vector3(0, 0, newZ);
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         Orbit();
         Zoom();
