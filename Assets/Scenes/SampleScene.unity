@@ -2451,7 +2451,7 @@ GameObject:
   - component: {fileID: 1231415057}
   m_Layer: 0
   m_Name: SampleBonom
-  m_TagString: Untagged
+  m_TagString: BONOM
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2463,7 +2463,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1231415052}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: b190d10b4f0f3b347b7feec1746f7af5, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.5
@@ -2576,13 +2576,17 @@ MonoBehaviour:
     AttkRange: 0
     AttkRadius: 0
     AttkDamage: 0
+    KnockBack: 0
+    KnockUp: 0
     ThreatThreshold: 0
     AggroRange: 0
     HealthMax: 0
     HealthRegen: 0
     MoveSpeed: 0
+    MoveAccel: 0
     TurnSpeed: 0
   Health: 0
+  Grounded: 0
   Target: {fileID: 0}
 --- !u!54 &1231415058
 Rigidbody:
@@ -2595,7 +2599,7 @@ Rigidbody:
   m_Mass: 1
   m_Drag: 0
   m_AngularDrag: 0.05
-  m_UseGravity: 0
+  m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
@@ -2693,7 +2697,7 @@ GameObject:
   - component: {fileID: 1340012043}
   m_Layer: 0
   m_Name: Plane
-  m_TagString: Untagged
+  m_TagString: GROUND
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2705,7 +2709,7 @@ MeshCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1340012042}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: c215bba839731be45af00dd888cf42ab, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 4
@@ -3684,43 +3688,52 @@ MonoBehaviour:
     Sprite: {fileID: 21300000, guid: d12aef4e479ef9d4ebfe1a42d385c908, type: 3}
     Prefab: {fileID: 0}
     RowPriority: 0
-    AttkDelayTicks: 0
+    AttkDelayTicks: 10000000
     AttkRange: 2
     AttkRadius: 0
     AttkDamage: 15
+    KnockBack: 2
+    KnockUp: 1
     ThreatThreshold: 0
     AggroRange: 10
     HealthMax: 200
     HealthRegen: 0.0005
     MoveSpeed: 5
+    MoveAccel: 1
     TurnSpeed: 0.05
   - Type: 1
     Sprite: {fileID: 21300000, guid: 72430ae94ea505e4fb6789a69222826f, type: 3}
     Prefab: {fileID: 0}
     RowPriority: 0
-    AttkDelayTicks: 0
+    AttkDelayTicks: 10000000
     AttkRange: 15
     AttkRadius: 0
     AttkDamage: 10
+    KnockBack: 0
+    KnockUp: 0
     ThreatThreshold: 0
     AggroRange: 20
     HealthMax: 100
     HealthRegen: 0.0005
     MoveSpeed: 7
+    MoveAccel: 1
     TurnSpeed: 0.05
   - Type: 2
     Sprite: {fileID: 21300000, guid: 93934bd7241ad604092a8a28a3abf712, type: 3}
     Prefab: {fileID: 0}
     RowPriority: 0
-    AttkDelayTicks: 0
+    AttkDelayTicks: 10000000
     AttkRange: 10
     AttkRadius: 10
     AttkDamage: 30
+    KnockBack: 0
+    KnockUp: 3
     ThreatThreshold: 0
     AggroRange: 15
     HealthMax: 100
     HealthRegen: 0.0005
     MoveSpeed: 3
+    MoveAccel: 1
     TurnSpeed: 0.05
   SpawnRadius: 10
   MemberCount: 200

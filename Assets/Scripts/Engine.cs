@@ -27,14 +27,14 @@ public class Engine : MonoBehaviour
     public bool Named;
     public Team SelectedTeam => Teams[SelectedTeamIndex];
 
-    public List<Bonom> GetEnemies(int teamIndex)
+    /*public List<Bonom> GetEnemies(int teamIndex)
     {
         List<Bonom> request_buffer = new List<Bonom>();
         foreach (Team team in Teams)
             if (team.TeamIndex != teamIndex)
                 request_buffer.AddRange(team.Members);
         return request_buffer;
-    }
+    }*/
 
     public Vector3 SpawnLocation(int teamIndex)
     {
@@ -60,19 +60,33 @@ public class Engine : MonoBehaviour
         attacker.myTeam.DamageDealt += dmg;
     }
 
+    private void KnockBonom(Bonom attacker, Bonom target, Vector3 source)
+    {
+        if (target.myRigidBody == null ||
+            !target.Grounded)
+            return;
+
+        Vector3 knockBack = Vector3.Normalize(target.transform.position - source) * attacker.Stats.KnockBack;
+        Vector3 knockUp = Vector3.up * attacker.Stats.KnockUp;
+
+        target.myRigidBody.AddForce(knockBack + knockUp, ForceMode.Impulse);
+    }
+
     private void AOEDamage(Bonom attacker, Bonom target)
     {
-        List<Bonom> enemies = GetEnemies(attacker.myTeam.TeamIndex);
+        //List<Bonom> enemies = GetEnemies(attacker.myTeam.TeamIndex);
         int damagedCount = 0;
-        foreach (Bonom enemy in enemies)
+        foreach (Bonom enemy in attacker.myTeam.Enemies)
         {
-            if (Vector3.Distance(enemy.transform.position, target.transform.position) <= attacker.Stats.AttkRadius)
+            float distance = Vector3.Distance(enemy.transform.position, target.transform.position);
+            if (distance <= attacker.Stats.AttkRadius)
             {
-                DamageBonom(attacker, target);
+                DamageBonom(attacker, enemy);
+                KnockBonom(attacker, enemy, distance == 0 ? attacker.transform.position : target.transform.position);
                 damagedCount++;
             }
         }
-        Debug.Log($"Total hit: {damagedCount}");   
+        Debug.Log($"Total hit: {damagedCount}");
     }
 
     public BonomStats RandomBonomStats()
@@ -82,18 +96,32 @@ public class Engine : MonoBehaviour
 
     public void GenerateBonom(Team requestingTeam, bool random = false, bool debug = false)
     {
-        GameObject newBonomObject = Instantiate(PrefabBonom.gameObject);
-        
+        GameObject newBonomObject;
+        Bonom newBonom;
+
+        if (RecycleBonom(out newBonom))
+        {
+            newBonomObject = newBonom.gameObject;
+        }
+        else
+        {
+            newBonomObject = Instantiate(PrefabBonom.gameObject);
+            newBonom = newBonomObject.GetComponent<Bonom>();
+        }
+
         newBonomObject.SetActive(true);
         newBonomObject.GetComponent<Renderer>().enabled = debug;
-        Bonom newBonom = newBonomObject.GetComponent<Bonom>();
+        
         requestingTeam.AddBonom(newBonom, random);
+
+        foreach (Team enemyTeam in Teams)
+            if (enemyTeam != requestingTeam)
+                enemyTeam.AddEnemy(newBonom);
+
         newBonomObject.transform.position = SpawnLocation(requestingTeam.TeamIndex);
         if (newBonom.Stats.Prefab != null)
-        {
-            /*GameObject newBonomMeshObject =*/ Instantiate(newBonom.Stats.Prefab, newBonomObject.transform);
-        }
-            
+            Instantiate(newBonom.Stats.Prefab, newBonomObject.transform);
+        
     }
 
     public Flag GenerateTeamFlag(Team requestingTeam)
@@ -113,7 +141,7 @@ public class Engine : MonoBehaviour
 
     private void SpawnUpdate()
     {
-        foreach(Team team in Teams)
+        foreach (Team team in Teams)
         {
             if (team.Members.Count >= MemberCount)
                 continue;
@@ -126,7 +154,19 @@ public class Engine : MonoBehaviour
         }
     }
 
-    private void DeadUpdate()
+    private bool RecycleBonom(out Bonom oldBonom)
+    {
+        oldBonom = null;
+        if (Dead.Count < 1 ||
+            Dead[0].DeathTime + new TimeSpan(BodyExpirationTicks) > DateTime.Now)
+            return false;
+        oldBonom = Dead[0];
+        Dead.RemoveAt(0);
+        Debug.Log("Recycled!");
+        return true;
+    }
+
+    /*private void DeadUpdate()
     {
         if (Dead.Count < 1)
             return;
@@ -140,12 +180,17 @@ public class Engine : MonoBehaviour
 
         if (Dead[0].DeathTime + new TimeSpan(BodyExpirationTicks) < DateTime.Now)
         {
+            foreach (Team enemyTeam in Teams)
+                if (enemyTeam != Dead[0].myTeam)
+                    enemyTeam.RemoveEnemy(Dead[0]);
+
             Dead[0].myTeam.RemoveBonom(Dead[0]);
+
             //Dead[0].myTeam.Members.Remove(Dead[0]);
             Destroy(Dead[0].gameObject);
             Dead.RemoveAt(0);
         }
-    }
+    }*/
 
     public void MoveSelectedFlag(Vector3 newLocation)
     {
@@ -160,7 +205,7 @@ public class Engine : MonoBehaviour
 
         Teams = new Team[SpawnLocations.Length];
 
-        for(int i = 0; i < SpawnLocations.Length; i++)
+        for (int i = 0; i < SpawnLocations.Length; i++)
         {
             if (SpawnLocations[i] == null)
                 continue;
@@ -172,7 +217,7 @@ public class Engine : MonoBehaviour
             else
                 color = spawnMesh.material.color;
 
-            Teams[i] = new Team(this, i, color, Named? SpawnLocations[i].name : null);
+            Teams[i] = new Team(this, i, color, Named ? SpawnLocations[i].name : null);
         }
 
         UIManager.PopulateTeamSelectionButtons();
@@ -185,6 +230,6 @@ public class Engine : MonoBehaviour
     void Update()
     {
         SpawnUpdate();
-        DeadUpdate();
+        //DeadUpdate();
     }
 }

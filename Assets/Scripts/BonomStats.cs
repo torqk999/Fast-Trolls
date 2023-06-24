@@ -21,11 +21,14 @@ public struct BonomStats
     public float AttkRange;
     public float AttkRadius;
     public float AttkDamage;
+    public float KnockBack;
+    public float KnockUp;
     public float ThreatThreshold;
     public float AggroRange;
     public float HealthMax;
     public float HealthRegen;
     public float MoveSpeed;
+    public float MoveAccel;
     public float TurnSpeed;
 
     public BonomStats(
@@ -38,11 +41,14 @@ public struct BonomStats
         float attkRange,
         float attkRadius,
         float attkDamage,
+        float knockBack,
+        float knockUp,
         float threatThreshold,
         float aggroRange,
         float healthMax,
         float healthRegen,
         float moveSpeed,
+        float moveAccel,
         float turnSpeed
         )
     {
@@ -55,11 +61,14 @@ public struct BonomStats
         AttkRange = attkRange;
         AttkRadius = attkRadius;
         AttkDamage = attkDamage;
+        KnockBack = knockBack;
+        KnockUp = knockUp;
         ThreatThreshold = threatThreshold;
         AggroRange = aggroRange;
         HealthMax = healthMax;
         HealthRegen = healthRegen;
         MoveSpeed = moveSpeed;
+        MoveAccel = moveAccel;
         TurnSpeed = turnSpeed;
     }
 }
