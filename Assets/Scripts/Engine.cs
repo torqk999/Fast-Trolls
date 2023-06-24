@@ -22,7 +22,7 @@ public class Engine : MonoBehaviour
 
     public int BodyExpirationSeconds;
     public int SpawnDelaySeconds;
-
+    public bool Named;
     public Team SelectedTeam => Teams[SelectedTeamIndex];
 
     public List<Bonom> GetEnemies(int teamIndex)
@@ -150,7 +150,7 @@ public class Engine : MonoBehaviour
             else
                 color = spawnMesh.material.color;
 
-            Teams[i] = new Team(this, i, color);
+            Teams[i] = new Team(this, i, color, Named? SpawnLocations[i].name : null);
         }
 
         UIManager.PopulateTeamSelectionButtons();
