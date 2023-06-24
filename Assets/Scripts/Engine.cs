@@ -32,7 +32,6 @@ public class Engine : MonoBehaviour
     public BonomStats[] PreSets;
 
     public float SpawnRadius;
-    //public int SpawnTime;
     public int MemberCount;
     public int SelectedTeamIndex;
 
@@ -165,7 +164,7 @@ public class Engine : MonoBehaviour
                 enemyTeam.AddEnemy(newBonom);
 
         newBonomObject.transform.position = SpawnLocation(requestingTeam.TeamIndex);
-        GetQuad(newBonomObject.transform.position).Add(newBonom);
+        //GetQuad(newBonomObject.transform.position).Add(newBonom);
 
         if (newBonom.Stats.Prefab != null)
         {
@@ -173,8 +172,6 @@ public class Engine : MonoBehaviour
             newMeshObject.SetActive(true);
             newMeshObject.GetComponent<Renderer>().material.color = newBonom.myTeam.TeamColor;
         }
-            
-        
     }
     public Flag GenerateTeamFlag(Team requestingTeam)
     {
