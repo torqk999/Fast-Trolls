@@ -10,7 +10,6 @@ public class Team
     public DateTime LastSpawn;
     public Color TeamColor;
     public List<Bonom> Members = new List<Bonom>();
-    //public List<Bonom> Enemies = new List<Bonom>();
     public Engine Engine;
     public Flag Flag;
     public Squad[] Squads;
@@ -41,14 +40,10 @@ public class Team
 
     private BonomStats NeededStats()
     {
-        //Debug.Log("Needed Stats!");
-
         for (int i = 0; i < Squads.Length; i++)
         {
             if (Squads[i].Ratio == 0)
                 continue;
-
-            //Debug.Log($"squadType: {Squads[i].Type} | squadCount: {Squads[i].Count} | membersCount: {Members.Count}");
 
             float currentRatio = (float)Squads[i].Count / Members.Count;
 
@@ -56,7 +51,6 @@ public class Team
                 Squads[i].Count == 0 ||
                 currentRatio < Squads[i].Ratio)
             {
-                //Debug.Log($"{Engine.PreSets[i].Type} was needed (Ratio/Current) : ({Squads[i].Ratio}/{currentRatio})");
                 return Engine.PreSets[i];
             }
                 
@@ -73,19 +67,7 @@ public class Team
         targetSquad.Count++;
 
         Engine.UIManager.CountUpdate(this);
-
-        //Debug.Log($"{targetSquad.Type} : {targetSquad.Count}");
     }
-
-    //public void AddEnemy(Bonom enemy)
-    //{
-    //    Enemies.Add(enemy);
-    //}
-    //
-    //public void RemoveEnemy(Bonom enemy)
-    //{
-    //    Enemies.Remove(enemy);
-    //}
 
     public void RemoveBonom(Bonom targetBonom)
     {

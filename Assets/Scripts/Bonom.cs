@@ -212,7 +212,7 @@ public class Bonom : MonoBehaviour
         Engine.BonomQuery(query, transform.position);
         foreach (Bonom proxy in query)
         {
-            if (proxy == this || !proxy.Grounded)
+            if (proxy == this || proxy == myTarget || !proxy.Grounded)
                 continue;
         
             buffer_vector1 = proxy.transform.position - transform.position;
