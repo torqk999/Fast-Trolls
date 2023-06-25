@@ -28,13 +28,12 @@ public class Bonom : MonoBehaviour
     private bool DeadQued = false;
     public bool Grounded = false;
 
-    //public List<Transform> Proxy = new List<Transform>();
-    private List<Bonom> query = new List<Bonom>();
 
     private int aggro_range;
     private int attk_range;
     public int attk_radius;
-    //public int type;
+
+    private List<Bonom> query = new List<Bonom>();
 
     private float health_max_inverse;
     private Vector3 buffer_vector0;
@@ -51,15 +50,13 @@ public class Bonom : MonoBehaviour
         Stats = stats;
         myTeam = team;
         myTarget = null;
+        DeadQued = false;
 
         Health = Stats.HealthMax;
         health_max_inverse = 1 / Stats.HealthMax;
         aggro_range = (int)(Stats.AggroRange / Engine.QuadResolution);
         attk_range = (int)(Stats.AttkRange / Engine.QuadResolution);
         attk_radius = (int)(Stats.AttkRadius / Engine.QuadResolution);
-
-        //Proxy.Clear();
-        DeadQued = false;
 
         myRigidBody = gameObject.GetComponent<Rigidbody>();
         myRigidBody.velocity = Vector3.zero;
@@ -124,20 +121,17 @@ public class Bonom : MonoBehaviour
     }
     private void OnCollisionStay(Collision collision)
     {
-        if (!Grounded)
-            Grounded = collision.transform.tag == "GROUND";
+        Grounded = collision.transform.tag == "GROUND";
     }
     //private void OnCollisionEnter(Collision collision)
     //{
-    //    if (collision.transform != this && collision.transform.tag == "BONOM")
-    //        Touching.Add(collision.transform);
+    //    Grounded = collision.transform.tag == "GROUND";
+    //    //if (collision.transform != this && collision.transform.tag == "BONOM")
+    //    //    Touching.Add(collision.transform);
     //}
     private void OnCollisionExit(Collision collision)
     {
-        Grounded = !(collision.transform.tag == "GROUND");
-
-        //if (collision.transform.tag == "BONOM")
-        //    Touching.Remove(collision.transform);
+        Grounded = collision.transform.tag == "GROUND" ? false : Grounded;
     }
 
     #region Sub-Routines
@@ -209,7 +203,7 @@ public class Bonom : MonoBehaviour
         buffer_vector0 = (myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position) - transform.position;
         float turnFactor = Vector3.Dot(buffer_vector0, transform.forward);
 
-        Engine.BonomQuery(query, transform.position);
+        Engine.BonomQuery(query, transform.position, 1);
         foreach (Bonom proxy in query)
         {
             if (proxy == this || proxy == myTarget || !proxy.Grounded)
@@ -244,6 +238,7 @@ public class Bonom : MonoBehaviour
         Health = Health < 0 ? 0 : Health > Stats.HealthMax ? Stats.HealthMax : Health;
         DeathTime = Alive ? DateTime.Now : DeathTime;
         DeadQued = Alive ? false : DeadQued;
+        Grounded = Alive ? Grounded : false;
         myCollider.enabled = Alive;
 
         if (!DeadQued && !Alive)
