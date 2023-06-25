@@ -70,8 +70,8 @@ public class Engine : MonoBehaviour
     {
         int xInit = QuadMap.GetLength(0);
         int zInit = QuadMap.GetLength(1);
-        /*int*/ xWidth = x < 0 ? xInit - x : x >= xInit ? x + 1 : xInit;
-        /*int*/ zWidth = z < 0 ? zInit - z : z >= zInit ? z + 1 : zInit;
+        xWidth = x < 0 ? xInit - x : x >= xInit ? x + 1 : xInit;
+        zWidth = z < 0 ? zInit - z : z >= zInit ? z + 1 : zInit;
         int xOffset = x < 0 ? -x : 0;
         int zOffset = z < 0 ? -z : 0;
         xRoot -= x < 0 ? x : 0;
