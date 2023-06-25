@@ -90,7 +90,7 @@ public class Team
     public void RemoveBonom(Bonom targetBonom)
     {
         if (Members.Remove(targetBonom))
-            this[targetBonom.type].Count--;
+            this[Engine.GetTypeIndex(targetBonom.Stats.Type)].Count--;
     }
 
     public int SquadIndex(int type)

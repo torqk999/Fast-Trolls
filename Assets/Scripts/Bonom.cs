@@ -34,7 +34,7 @@ public class Bonom : MonoBehaviour
     private int aggro_range;
     private int attk_range;
     public int attk_radius;
-    public int type;
+    //public int type;
 
     private float health_max_inverse;
     private Vector3 buffer_vector0;
