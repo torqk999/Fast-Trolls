@@ -157,8 +157,8 @@ public class Bonom : MonoBehaviour
             !TargetAggroRange(myTarget)))
             myTarget = null;
 
-        if (myTarget != null)
-            Debug.DrawLine(transform.position, myTarget.transform.position, Color.black);
+        //if (myTarget != null)
+        //    Debug.DrawLine(transform.position, myTarget.transform.position, Color.black);
 
         if (myTarget != null && TargetAttkRange(myTarget.transform))
             return;
@@ -216,7 +216,7 @@ public class Bonom : MonoBehaviour
         buffer_vector0 = (buffer_vector0.normalized * Stats.MoveSpeed) - myRigidBody.velocity;
         buffer_vector0 = buffer_vector0.normalized * Stats.MoveAccel * turnFactor;
 
-        Debug.DrawLine(transform.position, transform.position + buffer_vector0, Color.green);
+        //Debug.DrawLine(transform.position, transform.position + buffer_vector0, Color.green);
 
         myRigidBody.AddForce(buffer_vector0);
     }
@@ -249,15 +249,17 @@ public class Bonom : MonoBehaviour
         }
 
         myTeam.DamageHealed += Health - oldHealth;
+        long deathLength = DateTime.Now.Ticks - DeathTime.Ticks;
 
         if (myDebugRenderer != null)
         {
-            long deathLength = DateTime.Now.Ticks - DeathTime.Ticks;
             float lerp = (Engine.BodyExpirationTicks - deathLength) * Engine.body_exp_inverse;
             buffer_color = myTeam.TeamColor;
             buffer_color.a = lerp;
             myDebugRenderer.material.color = buffer_color;
         }
+
+        gameObject.SetActive(Engine.BodyExpirationTicks - deathLength > 0);
     }
     #endregion
 
@@ -271,12 +273,12 @@ public class Bonom : MonoBehaviour
     void Update()
     {
         CanvasUpdate();
-        QuadUpdate();
         LifeUpdate();
 
         if (!Alive || !Grounded)
             return;
 
+        QuadUpdate();
         TargetUpdate();
         MoveUpdate();
         TurnUpdate();

@@ -13,7 +13,6 @@ public class Engine : MonoBehaviour
 
     public List<Bonom> Dead = new List<Bonom>();
     private List<Bonom> query = new List<Bonom>();
-    //private string[] Types;
 
     public Team[] Teams;
     public Transform[] SpawnLocations;
@@ -154,7 +153,7 @@ public class Engine : MonoBehaviour
         return PreSets[(int)(UnityEngine.Random.value * (PreSets.Length - 1) + .5f)];
     }
 
-    public void GenerateBonom(Team requestingTeam, bool random = false, bool debug = false)
+    public void AddBonomToTeam(Team requestingTeam, bool random = false, bool debug = false)
     {
         GameObject newBonomObject;
         Bonom newBonom;
@@ -202,7 +201,7 @@ public class Engine : MonoBehaviour
                 continue;
 
             team.LastSpawn = DateTime.Now;
-            GenerateBonom(team, false, debug);
+            AddBonomToTeam(team, false, debug);
         }
     }
 

@@ -3682,7 +3682,7 @@ MonoBehaviour:
   zRoot: 0
   xWidth: 0
   zWidth: 0
-  QuadResolution: 10
+  QuadResolution: 5
   Dead: []
   Teams: []
   SpawnLocations:
@@ -3743,8 +3743,8 @@ MonoBehaviour:
     MoveAccel: 1
     TurnSpeed: 0.05
   SpawnRadius: 10
-  AvoidanceScalar: 500
-  MemberCount: 200
+  AvoidanceScalar: 50
+  MemberCount: 50
   SelectedTeamIndex: 0
   PrefabBonom: {fileID: 1231415057}
   PrefabFlag: {fileID: 1796263242}
