@@ -152,12 +152,6 @@ public class Bonom : MonoBehaviour
     }
     private void TargetUpdate()
     {
-        //if (!Alive)
-        //{
-        //    myTarget = null;
-        //    return;
-        //}
-
         if (myTarget != null &&
            (!myTarget.Alive ||
             !TargetAggroRange(myTarget)))
@@ -183,11 +177,11 @@ public class Bonom : MonoBehaviour
 
             if (bonom.Alive &&
                 TargetAggroRange(bonom) &&
-                (closest == null || FastDistanceGreater(closest.transform, bonom.transform, transform)/*FastDistance(closest.transform.position, transform.position) > FastDistance(enemy.transform.position, transform.position)*/))
+                (closest == null || FastDistanceGreater(closest.transform, bonom.transform, transform)))
                 closest = bonom;
         }
 
-        myTarget = myTarget == null || FastDistanceGreater(closest.transform, myTarget.transform, transform)/*FastDistance(Target.transform.position, transform.position) > FastDistance(closest.transform.position, transform.position)*/ ? closest : myTarget;
+        myTarget = myTarget == null || FastDistanceGreater(closest.transform, myTarget.transform, transform)? closest : myTarget;
     }
     private void TurnUpdate()
     {
@@ -205,9 +199,7 @@ public class Bonom : MonoBehaviour
     }
     private void MoveUpdate()
     {
-        if (//myRigidBody == null ||
-            //!Alive || !Grounded ||
-            (myTarget != null && TargetAttkRange(myTarget.transform)) ||
+        if ((myTarget != null && TargetAttkRange(myTarget.transform)) ||
             TargetAttkRange(myTeam.Flag.transform))
             return;
 
@@ -250,11 +242,6 @@ public class Bonom : MonoBehaviour
         {
             DeadQued = true;
             Engine.Dead.Add(this);
-
-            //foreach (Team enemyTeam in Engine.Teams)
-            //    if (enemyTeam != myTeam)
-            //        enemyTeam.RemoveEnemy(this);
-
             myTeam.RemoveBonom(this);
         }
 
@@ -263,9 +250,9 @@ public class Bonom : MonoBehaviour
         if (myDebugRenderer != null)
         {
             long deathLength = DateTime.Now.Ticks - DeathTime.Ticks;
-            float lerp = (Engine.BodyExpirationTicks - deathLength) * Engine.body_exp_inverse;/// Engine.BodyExpirationTicks;
+            float lerp = (Engine.BodyExpirationTicks - deathLength) * Engine.body_exp_inverse;
             buffer_color = myTeam.TeamColor;
-            buffer_color.a = lerp;//= new Color(myTeam.TeamColor.r, myTeam.TeamColor.g, myTeam.TeamColor.b, lerp);
+            buffer_color.a = lerp;
             myDebugRenderer.material.color = buffer_color;
         }
     }

@@ -31,7 +31,9 @@ public class Engine : MonoBehaviour
     public float body_exp_inverse;
     public long SpawnDelayTicks;
     public long RegenDelayTicks;
+
     public bool Named;
+    public bool debug;
     public Team SelectedTeam => Teams[SelectedTeamIndex];
 
     public void GetCoords(Vector3 coordinates, out int xCoord, out int zCoord)
@@ -172,19 +174,9 @@ public class Engine : MonoBehaviour
         
         requestingTeam.AddBonom(newBonom, random);
 
-        //foreach (Team enemyTeam in Teams)
-        //    if (enemyTeam != requestingTeam)
-        //        enemyTeam.AddEnemy(newBonom);
-
         newBonomObject.transform.position = SpawnLocation(requestingTeam.TeamIndex);
         GetQuad(newBonomObject.transform.position).Add(newBonom);
 
-        //if (newBonom.Stats.Prefab != null)
-        //{
-        //    GameObject newMeshObject = Instantiate(newBonom.Stats.Prefab, newBonomObject.transform.position, newBonomObject.transform.rotation, newBonomObject.transform);
-        //    newMeshObject.SetActive(true);
-        //    newMeshObject.GetComponent<Renderer>().material.color = newBonom.myTeam.TeamColor;
-        //}
     }
     public Flag GenerateTeamFlag(Team requestingTeam)
     {
@@ -210,7 +202,7 @@ public class Engine : MonoBehaviour
                 continue;
 
             team.LastSpawn = DateTime.Now;
-            GenerateBonom(team, false, true);
+            GenerateBonom(team, false, debug);
         }
     }
 
