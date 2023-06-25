@@ -9,7 +9,8 @@ public class Bonom : MonoBehaviour
 {
     public Rigidbody myRigidBody;
     public Collider myCollider;
-    public MeshRenderer myRenderer;
+    public MeshRenderer myDebugRenderer;
+    public MeshRenderer myMainRenderer;
     public TMP_Text NamePanel;
     public Slider HealthSlider;
     public GameObject Canvas;
@@ -19,14 +20,14 @@ public class Bonom : MonoBehaviour
     public Quadrant myQuad;
     public Bonom myTarget;
     public BonomStats Stats;
-    
+
     public DateTime DeathTime;
     public DateTime LastAttack;
     public float Health;
-    
+
     private bool DeadQued = false;
     public bool Grounded = false;
-    
+
     public List<Transform> Touching = new List<Transform>();
     private List<Bonom> query = new List<Bonom>();
 
@@ -41,7 +42,7 @@ public class Bonom : MonoBehaviour
 
     public bool Alive => Health > 0;
     public int TeamIndex => myTeam == null ? -1 : myTeam.TeamIndex;
-    
+
     public void Init(Engine engine, Team team, BonomStats stats)
     {
         Engine = engine;
@@ -54,19 +55,35 @@ public class Bonom : MonoBehaviour
         aggro_range = (int)(Stats.AggroRange / Engine.QuadResolution);
         attk_range = (int)(Stats.AttkRange / Engine.QuadResolution);
         attk_radius = (int)(Stats.AttkRadius / Engine.QuadResolution);
-        
+
         Touching.Clear();
         DeadQued = false;
 
         myRigidBody = gameObject.GetComponent<Rigidbody>();
         myRigidBody.velocity = Vector3.zero;
         myCollider = gameObject.GetComponent<Collider>();
-        myRenderer = gameObject.GetComponent<MeshRenderer>();
-        myRenderer.material.color = myTeam.TeamColor;
         Canvas = transform.GetChild(0).gameObject;
         HealthSlider = Canvas.transform.GetChild(0).GetComponent<Slider>();
         NamePanel = Canvas.transform.GetChild(1).GetComponent<TMP_Text>();
         NamePanel.text = Stats.Type.ToString();
+
+        MeshInit();
+    }
+    private void MeshInit()
+    {
+        if (myMainRenderer != null)
+            Destroy(myMainRenderer.gameObject);
+
+        myDebugRenderer = gameObject.GetComponent<MeshRenderer>();
+        myDebugRenderer.material.color = myTeam.TeamColor;
+
+        if (Stats.Prefab == null)
+            return;
+
+        GameObject newMeshObject = Instantiate(Stats.Prefab, transform.position, transform.rotation, transform);
+        newMeshObject.SetActive(true);
+        myMainRenderer = newMeshObject.GetComponent<MeshRenderer>();
+        myMainRenderer.material.color = myTeam.TeamColor;
     }
     private bool TargetAggroRange(Bonom target)
     {
@@ -134,12 +151,12 @@ public class Bonom : MonoBehaviour
         HealthSlider.value = Health * health_max_inverse;// Stats.HealthMax;
     }
     private void TargetUpdate()
-    { 
-        if (!Alive)
-        {
-            myTarget = null;
-            return;
-        }
+    {
+        //if (!Alive)
+        //{
+        //    myTarget = null;
+        //    return;
+        //}
 
         if (myTarget != null &&
            (!myTarget.Alive ||
@@ -155,7 +172,7 @@ public class Bonom : MonoBehaviour
         Bonom closest = null;
         Engine.BonomQuery(query, transform.position, aggro_range);
 
-        foreach(Bonom bonom in query)
+        foreach (Bonom bonom in query)
         {
             if (bonom.myTeam == myTeam)
                 continue;
@@ -174,8 +191,8 @@ public class Bonom : MonoBehaviour
     }
     private void TurnUpdate()
     {
-        if (!Alive || !Grounded)
-            return;
+        //if (!Alive || !Grounded)
+        //    return;
 
         buffer_vector0 = myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position;
         buffer_vector0 -= transform.position;
@@ -189,7 +206,7 @@ public class Bonom : MonoBehaviour
     private void MoveUpdate()
     {
         if (//myRigidBody == null ||
-            !Alive || !Grounded ||
+            //!Alive || !Grounded ||
             (myTarget != null && TargetAttkRange(myTarget.transform)) ||
             TargetAttkRange(myTeam.Flag.transform))
             return;
@@ -202,12 +219,14 @@ public class Bonom : MonoBehaviour
         buffer_vector0 = (buffer_vector0.normalized * Stats.MoveSpeed) - myRigidBody.velocity;
         buffer_vector0 = buffer_vector0.normalized * Stats.MoveAccel * turnFactor;
 
+        Debug.DrawLine(transform.position, transform.position + buffer_vector0, Color.green);
+
         myRigidBody.AddForce(buffer_vector0);
     }
     private void AttackUpdate()
     {
-        if (!Alive || !Grounded)
-            return;
+        //if (!Alive || !Grounded)
+        //    return;
 
         if (myTarget == null ||
             LastAttack.Ticks + Stats.AttkDelayTicks > DateTime.Now.Ticks ||
@@ -241,34 +260,37 @@ public class Bonom : MonoBehaviour
 
         myTeam.DamageHealed += Health - oldHealth;
 
-        if (myRenderer != null)
+        if (myDebugRenderer != null)
         {
             long deathLength = DateTime.Now.Ticks - DeathTime.Ticks;
             float lerp = (Engine.BodyExpirationTicks - deathLength) * Engine.body_exp_inverse;/// Engine.BodyExpirationTicks;
             buffer_color = myTeam.TeamColor;
             buffer_color.a = lerp;//= new Color(myTeam.TeamColor.r, myTeam.TeamColor.g, myTeam.TeamColor.b, lerp);
-            myRenderer.material.color = buffer_color;
-        }   
+            myDebugRenderer.material.color = buffer_color;
+        }
     }
     #endregion
 
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Engine == null)
-            return;
+        //if (Engine == null)
+        //    return;
 
         CanvasUpdate();
         QuadUpdate();
         LifeUpdate();
-        TargetUpdate();
 
+        if (!Alive || !Grounded)
+            return;
+
+        TargetUpdate();
         MoveUpdate();
         TurnUpdate();
         AttackUpdate();

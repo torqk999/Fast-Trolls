@@ -9,6 +9,7 @@ public class Engine : MonoBehaviour
     public int xRoot, zRoot;
     public int xWidth, zWidth;
     public int QuadResolution;
+    private float quad_res_inverse;
 
     public List<Bonom> Dead = new List<Bonom>();
     private List<Bonom> query = new List<Bonom>();
@@ -35,8 +36,8 @@ public class Engine : MonoBehaviour
 
     public void GetCoords(Vector3 coordinates, out int xCoord, out int zCoord)
     {
-        xCoord = ((int)coordinates.x / QuadResolution);// + xRoot;
-        zCoord = ((int)coordinates.z / QuadResolution);// + zRoot;
+        xCoord = (int)(coordinates.x * quad_res_inverse);// + xRoot;
+        zCoord = (int)(coordinates.z * quad_res_inverse);// + zRoot;
     }
     public Quadrant GetQuad(Vector3 coordinates)
     {
@@ -178,12 +179,12 @@ public class Engine : MonoBehaviour
         newBonomObject.transform.position = SpawnLocation(requestingTeam.TeamIndex);
         GetQuad(newBonomObject.transform.position).Add(newBonom);
 
-        if (newBonom.Stats.Prefab != null)
-        {
-            GameObject newMeshObject = Instantiate(newBonom.Stats.Prefab, newBonomObject.transform.position, newBonomObject.transform.rotation, newBonomObject.transform);
-            newMeshObject.SetActive(true);
-            newMeshObject.GetComponent<Renderer>().material.color = newBonom.myTeam.TeamColor;
-        }
+        //if (newBonom.Stats.Prefab != null)
+        //{
+        //    GameObject newMeshObject = Instantiate(newBonom.Stats.Prefab, newBonomObject.transform.position, newBonomObject.transform.rotation, newBonomObject.transform);
+        //    newMeshObject.SetActive(true);
+        //    newMeshObject.GetComponent<Renderer>().material.color = newBonom.myTeam.TeamColor;
+        //}
     }
     public Flag GenerateTeamFlag(Team requestingTeam)
     {
@@ -260,6 +261,7 @@ public class Engine : MonoBehaviour
         UIManager.TeamSelection(SelectedTeamIndex);
 
         body_exp_inverse = 1f / BodyExpirationTicks;
+        quad_res_inverse = 1f / QuadResolution;
     }
 
     // Update is called once per frame
