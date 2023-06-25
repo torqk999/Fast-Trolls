@@ -2570,7 +2570,7 @@ MonoBehaviour:
     KillCount: 0
   myTarget: {fileID: 0}
   Stats:
-    Type: 0
+    Type: 
     Sprite: {fileID: 0}
     Prefab: {fileID: 0}
     RowPriority: 0
@@ -2589,8 +2589,8 @@ MonoBehaviour:
     TurnSpeed: 0
   Health: 0
   Grounded: 0
-  Touching: []
   attk_radius: 0
+  type: 0
 --- !u!54 &1231415058
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -3122,15 +3122,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Manager: {fileID: 0}
   Squad:
-    Type: 0
+    TypeIndex: 0
     Count: 0
     Ratio: 0
     Locked: 0
-  Type: 0
-  TypeSprite: {fileID: 1145649433}
   Percent: {fileID: 507589793}
   Slider: {fileID: 1018471155}
   Lock: {fileID: 1750802258}
+  TypeIndex: 0
+  TypeSprite: {fileID: 1145649433}
 --- !u!1 &1620894871
 GameObject:
   m_ObjectHideFlags: 0
@@ -3692,7 +3692,7 @@ MonoBehaviour:
   - {fileID: 933272845}
   - {fileID: 640022277}
   PreSets:
-  - Type: 0
+  - Type: Melee
     Sprite: {fileID: 21300000, guid: d12aef4e479ef9d4ebfe1a42d385c908, type: 3}
     Prefab: {fileID: 0}
     RowPriority: 0
@@ -3709,7 +3709,7 @@ MonoBehaviour:
     MoveSpeed: 5
     MoveAccel: 1
     TurnSpeed: 0.05
-  - Type: 1
+  - Type: Ranged
     Sprite: {fileID: 21300000, guid: 72430ae94ea505e4fb6789a69222826f, type: 3}
     Prefab: {fileID: 0}
     RowPriority: 0
@@ -3726,7 +3726,7 @@ MonoBehaviour:
     MoveSpeed: 7
     MoveAccel: 1
     TurnSpeed: 0.05
-  - Type: 2
+  - Type: Mage
     Sprite: {fileID: 21300000, guid: 93934bd7241ad604092a8a28a3abf712, type: 3}
     Prefab: {fileID: 0}
     RowPriority: 0
@@ -3744,6 +3744,7 @@ MonoBehaviour:
     MoveAccel: 1
     TurnSpeed: 0.05
   SpawnRadius: 10
+  AvoidanceScalar: 20
   MemberCount: 200
   SelectedTeamIndex: 0
   PrefabBonom: {fileID: 1231415057}

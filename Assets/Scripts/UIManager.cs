@@ -90,7 +90,7 @@ public class UIManager : MonoBehaviour
     private void SyncCount(int index)
     {
         Squad targetSquad = Engine.SelectedTeam.Squads[index];
-        SquadCounts[index].text = $"{targetSquad.Type}:{targetSquad.Count}";
+        SquadCounts[index].text = $"{Engine.PreSets[index].Type}:{targetSquad.Count}";
     }
 
     private void SyncSliders()
@@ -99,7 +99,7 @@ public class UIManager : MonoBehaviour
             RatioPanels[i].Sync(Engine.SelectedTeam.Squads[i]);
     }
 
-    private void SyncSlider(BonomType type)
+    private void SyncSlider(int type)
     {
         int index = Engine.SelectedTeam.SquadIndex(type);
         RatioPanels[index].Sync(Engine.SelectedTeam.Squads[index]);
@@ -122,9 +122,9 @@ public class UIManager : MonoBehaviour
     }
     public void RatioSliderLockToggle(BonomRatioPanel alteredPanel)
     {
-        Squad targetSquad = Engine.SelectedTeam[alteredPanel.Type];
+        Squad targetSquad = Engine.SelectedTeam[alteredPanel.TypeIndex];
         targetSquad.ToggleLock();
-        SyncSlider(alteredPanel.Type);
+        SyncSlider(alteredPanel.TypeIndex);
     }
     public void RatioSliderUpdate(BonomRatioPanel alteredPanel)
     {
@@ -149,9 +149,9 @@ public class UIManager : MonoBehaviour
                 continue;
             }
                 
-
             if (squad.Locked)
                 reserved += squad.Ratio;
+
             else
                 unlocked.Add(squad);
         }
@@ -160,7 +160,6 @@ public class UIManager : MonoBehaviour
         adjustedDelta = alteredPanel.Slider.value > 1 - reserved ? (1 - reserved) - alteredPanel.Slider.value : adjustedDelta;
         int postSign = Math.Sign(adjustedDelta);
         adjustedDelta = preSign == postSign ? adjustedDelta : 0;
-
 
         foreach(Squad squad in unlocked)
         {
@@ -197,8 +196,6 @@ public class UIManager : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log("Clicked!");
-
             PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
             pointerEventData.position = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
             List<RaycastResult> pointerResults = new List<RaycastResult>();

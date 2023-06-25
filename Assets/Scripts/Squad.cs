@@ -3,14 +3,14 @@
 [Serializable]
 public class Squad
 {
-    public BonomType Type;
+    public int TypeIndex;
     public int Count;
     public float Ratio;
     public bool Locked;
 
-    public Squad(BonomType type, float ratio)
+    public Squad(int type, float ratio)
     {
-        Type = type;
+        TypeIndex = type;
         Count = 0;
         Ratio = ratio;
         Locked = false;

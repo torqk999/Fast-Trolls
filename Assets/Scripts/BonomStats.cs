@@ -2,17 +2,17 @@
 using Unity;
 using UnityEngine;
 
-public enum BonomType
+/*public enum BonomType
 {
     Melee,
     Ranged,
     Mage
-}
+}*/
 
 [Serializable]
 public struct BonomStats
 {
-    public BonomType Type;
+    public string Type;
     public Sprite Sprite;
     public GameObject Prefab;
 
@@ -32,7 +32,7 @@ public struct BonomStats
     public float TurnSpeed;
 
     public BonomStats(
-        BonomType bonomType,
+        string bonomType,
         Sprite bonomSprite,
         GameObject prefab,
 

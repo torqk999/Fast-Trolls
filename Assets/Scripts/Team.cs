@@ -34,7 +34,7 @@ public class Team
         Debug.Log(init);
         for (int i = 0; i < Squads.Length; i++)
         {
-            Squads[i] = new Squad(engine.PreSets[i].Type, i < Squads.Length - 1 ? init : 1 - sum);
+            Squads[i] = new Squad(i, i < Squads.Length - 1 ? init : 1 - sum);
             sum += init;
         } 
     }
@@ -69,7 +69,7 @@ public class Team
     {
         newBonom.Init(Engine, this, random ? Engine.RandomBonomStats() : NeededStats());
         Members.Add(newBonom);
-        Squad targetSquad = this[newBonom.Stats.Type];
+        Squad targetSquad = this[Engine.GetTypeIndex(newBonom.Stats.Type)];
         targetSquad.Count++;
 
         Engine.UIManager.CountUpdate(this);
@@ -90,23 +90,23 @@ public class Team
     public void RemoveBonom(Bonom targetBonom)
     {
         if (Members.Remove(targetBonom))
-            this[targetBonom.Stats.Type].Count--;
+            this[targetBonom.type].Count--;
     }
 
-    public int SquadIndex(BonomType type)
+    public int SquadIndex(int type)
     {
         for (int i = 0; i < Squads.Length; i++)
-            if (Squads[i].Type == type)
+            if (Squads[i].TypeIndex == type)
                 return i;
         return -1;
     }
 
-    public Squad this[BonomType type]
+    public Squad this[int type]
     {
         get
         {
             for (int i = 0; i < Squads.Length; i++)
-                if (Squads[i].Type == type)
+                if (Squads[i].TypeIndex == type)
                     return Squads[i];
             return null;
         }
@@ -114,7 +114,7 @@ public class Team
         set
         {
             for (int i = 0; i < Squads.Length; i++)
-                if (Squads[i].Type == type)
+                if (Squads[i].TypeIndex == type)
                     Squads[i] = value;
         }
     }

@@ -6,13 +6,15 @@ public class BonomRatioPanel : MonoBehaviour
 {
     public UIManager Manager;
     public Squad Squad;
-    public BonomType Type;
 
-    public Image TypeSprite;
     public TMP_Text Percent;
     public Slider Slider;
     public Button Lock;
-    
+
+    public int TypeIndex;
+    //public string TypeName;
+    public Image TypeSprite;
+
     private float slider_cache = 0;
 
     public float Delta => Slider.value - slider_cache;
@@ -20,7 +22,8 @@ public class BonomRatioPanel : MonoBehaviour
     public void Init(UIManager manager, BonomStats stats, Squad squad)
     {
         Manager = manager;
-        Type = stats.Type;
+        //TypeName = stats.Type;
+        TypeIndex = Manager.Engine.GetTypeIndex(stats.Type);
         TypeSprite.sprite = stats.Sprite;
         Sync(squad);
         Lock.onClick.AddListener(() => Manager.RatioSliderLockToggle(this));

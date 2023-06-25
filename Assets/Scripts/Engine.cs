@@ -13,12 +13,14 @@ public class Engine : MonoBehaviour
 
     public List<Bonom> Dead = new List<Bonom>();
     private List<Bonom> query = new List<Bonom>();
+    //private string[] Types;
 
     public Team[] Teams;
     public Transform[] SpawnLocations;
     public BonomStats[] PreSets;
 
     public float SpawnRadius;
+    public float AvoidanceScalar;
     public int MemberCount;
     public int SelectedTeamIndex;
 
@@ -35,6 +37,13 @@ public class Engine : MonoBehaviour
     public bool Named;
     public bool debug;
     public Team SelectedTeam => Teams[SelectedTeamIndex];
+    public int GetTypeIndex(string requestType)
+    {
+        for (int i = 0; i < PreSets.Length; i++)
+            if (PreSets[i].Type == requestType)
+                return i;
+        return -1;
+    }
 
     public void GetCoords(Vector3 coordinates, out int xCoord, out int zCoord)
     {
@@ -92,7 +101,7 @@ public class Engine : MonoBehaviour
         return location;
     }
 
-    public void BonomQuery(List<Bonom> query, Vector3 position, int radius)
+    public void BonomQuery(List<Bonom> query, Vector3 position, int radius = 0)
     {
         query.Clear();
         int xOrigin, zOrigin;

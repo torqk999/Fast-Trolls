@@ -28,12 +28,14 @@ public class Bonom : MonoBehaviour
     private bool DeadQued = false;
     public bool Grounded = false;
 
-    public List<Transform> Touching = new List<Transform>();
+    //public List<Transform> Proxy = new List<Transform>();
     private List<Bonom> query = new List<Bonom>();
 
     private int aggro_range;
     private int attk_range;
     public int attk_radius;
+    public int type;
+
     private float health_max_inverse;
     private Vector3 buffer_vector0;
     private Vector3 buffer_vector1;
@@ -56,7 +58,7 @@ public class Bonom : MonoBehaviour
         attk_range = (int)(Stats.AttkRange / Engine.QuadResolution);
         attk_radius = (int)(Stats.AttkRadius / Engine.QuadResolution);
 
-        Touching.Clear();
+        //Proxy.Clear();
         DeadQued = false;
 
         myRigidBody = gameObject.GetComponent<Rigidbody>();
@@ -116,23 +118,26 @@ public class Bonom : MonoBehaviour
     {
         return Math.Pow(a.x - b.x, 2) + Math.Pow(a.y - b.y, 2) + Math.Pow(a.z - b.z, 2);
     }
-
+    private double FastDistance(ref Vector3 v)
+    {
+        return Math.Pow(v.x, 2) + Math.Pow(v.y, 2) + Math.Pow(v.z, 2);
+    }
     private void OnCollisionStay(Collision collision)
     {
         if (!Grounded)
             Grounded = collision.transform.tag == "GROUND";
     }
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.transform.tag == "BONOM")
-            Touching.Add(collision.transform);
-    }
+    //private void OnCollisionEnter(Collision collision)
+    //{
+    //    if (collision.transform != this && collision.transform.tag == "BONOM")
+    //        Touching.Add(collision.transform);
+    //}
     private void OnCollisionExit(Collision collision)
     {
         Grounded = !(collision.transform.tag == "GROUND");
 
-        if (collision.transform.tag == "BONOM")
-            Touching.Remove(collision.transform);
+        //if (collision.transform.tag == "BONOM")
+        //    Touching.Remove(collision.transform);
     }
 
     #region Sub-Routines
@@ -203,8 +208,16 @@ public class Bonom : MonoBehaviour
 
         buffer_vector0 = (myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position) - transform.position;
         float turnFactor = Vector3.Dot(buffer_vector0, transform.forward);
-        foreach (Transform touch in Touching)
-            buffer_vector0 -= touch.position - transform.position;
+
+        Engine.BonomQuery(query, transform.position);
+        foreach (Bonom proxy in query)
+        {
+            if (proxy == this || !proxy.Grounded)
+                continue;
+        
+            buffer_vector1 = proxy.transform.position - transform.position;
+            buffer_vector0 -= buffer_vector1.normalized * (Engine.AvoidanceScalar / (float)FastDistance(ref buffer_vector1));
+        }
 
         buffer_vector0 = (buffer_vector0.normalized * Stats.MoveSpeed) - myRigidBody.velocity;
         buffer_vector0 = buffer_vector0.normalized * Stats.MoveAccel * turnFactor;
@@ -262,9 +275,6 @@ public class Bonom : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //if (Engine == null)
-        //    return;
-
         CanvasUpdate();
         QuadUpdate();
         LifeUpdate();
