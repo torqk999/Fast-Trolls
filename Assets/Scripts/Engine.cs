@@ -38,23 +38,14 @@ public class Engine : MonoBehaviour
 
     public void GetCoords(Vector3 coordinates, out int xCoord, out int zCoord)
     {
-        xCoord = (int)(coordinates.x * quad_res_inverse);// + xRoot;
-        zCoord = (int)(coordinates.z * quad_res_inverse);// + zRoot;
+        xCoord = (int)(coordinates.x * quad_res_inverse);
+        zCoord = (int)(coordinates.z * quad_res_inverse);
     }
     public Quadrant GetQuad(Vector3 coordinates)
     {
         int xTarget, zTarget;
         GetCoords(coordinates, out xTarget, out zTarget);
         return GetQuad(xTarget, zTarget);
-
-        //if (xTarget < 0 || xTarget >= QuadMap.GetLength(0) ||
-        //    zTarget < 0 || zTarget >= QuadMap.GetLength(1))
-        //{
-        //    ExpandMap(xTarget, zTarget);
-        //    GetCoords(coordinates, out xTarget, out zTarget);
-        //}
-        //
-        //return QuadMap[xTarget, zTarget];
     }
     public Quadrant GetQuad(int xTarget, int zTarget)
     {

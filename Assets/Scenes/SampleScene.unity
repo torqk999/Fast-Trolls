@@ -2550,7 +2550,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   myRigidBody: {fileID: 0}
   myCollider: {fileID: 0}
-  myRenderer: {fileID: 0}
+  myDebugRenderer: {fileID: 0}
+  myMainRenderer: {fileID: 0}
   NamePanel: {fileID: 0}
   HealthSlider: {fileID: 0}
   Canvas: {fileID: 0}
@@ -2560,7 +2561,6 @@ MonoBehaviour:
     TeamIndex: 0
     TeamColor: {r: 0, g: 0, b: 0, a: 0}
     Members: []
-    Enemies: []
     Engine: {fileID: 0}
     Flag: {fileID: 0}
     Squads: []
@@ -2590,6 +2590,7 @@ MonoBehaviour:
   Health: 0
   Grounded: 0
   Touching: []
+  attk_radius: 0
 --- !u!54 &1231415058
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -3605,7 +3606,6 @@ MonoBehaviour:
     TeamIndex: 0
     TeamColor: {r: 0, g: 0, b: 0, a: 0}
     Members: []
-    Enemies: []
     Engine: {fileID: 0}
     Flag: {fileID: 0}
     Squads: []
@@ -3679,6 +3679,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7315c27bfda854a4cb0a38bc4c213b19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  xRoot: 0
+  zRoot: 0
+  xWidth: 0
+  zWidth: 0
   QuadResolution: 10
   Dead: []
   Teams: []
@@ -3751,6 +3755,7 @@ MonoBehaviour:
   SpawnDelayTicks: 10000000
   RegenDelayTicks: 0
   Named: 0
+  debug: 1
 --- !u!4 &1897847843
 Transform:
   m_ObjectHideFlags: 0

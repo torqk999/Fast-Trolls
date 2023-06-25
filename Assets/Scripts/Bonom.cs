@@ -119,7 +119,8 @@ public class Bonom : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
-        Grounded = collision.transform.tag == "GROUND";
+        if (!Grounded)
+            Grounded = collision.transform.tag == "GROUND";
     }
     private void OnCollisionEnter(Collision collision)
     {
@@ -181,13 +182,10 @@ public class Bonom : MonoBehaviour
                 closest = bonom;
         }
 
-        myTarget = myTarget == null || FastDistanceGreater(closest.transform, myTarget.transform, transform)? closest : myTarget;
+        myTarget = myTarget == null ? closest : closest == null ? myTarget : FastDistanceGreater(closest.transform, myTarget.transform, transform) ? myTarget : closest;
     }
     private void TurnUpdate()
     {
-        //if (!Alive || !Grounded)
-        //    return;
-
         buffer_vector0 = myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position;
         buffer_vector0 -= transform.position;
         buffer_vector0.y = 0;
@@ -217,9 +215,6 @@ public class Bonom : MonoBehaviour
     }
     private void AttackUpdate()
     {
-        //if (!Alive || !Grounded)
-        //    return;
-
         if (myTarget == null ||
             LastAttack.Ticks + Stats.AttkDelayTicks > DateTime.Now.Ticks ||
             !myTarget.Alive ||
