@@ -9,10 +9,13 @@ public class Engine : MonoBehaviour
     public int xRoot, zRoot;
     public int xWidth, zWidth;
     public int QuadResolution;
+    private int xWorkCurrent, zWorkCurrent;
+    private int xWorkPrevious, zWorkPrevious;
+    private int good_batches;
     private float quad_res_inverse;
 
     public List<Bonom> Dead = new List<Bonom>();
-    private List<Bonom> query = new List<Bonom>();
+    public List<Bonom>[] SearchQuery;
 
     public Team[] Teams;
     public Transform[] SpawnLocations;
@@ -20,6 +23,9 @@ public class Engine : MonoBehaviour
 
     public float SpawnRadius;
     public float AvoidanceScalar;
+    public float WorkHighlightHeight;
+    public int QueryRadius;
+    public int ProxyRadius;
     public int MemberCount;
     public int SelectedTeamIndex;
 
@@ -49,21 +55,33 @@ public class Engine : MonoBehaviour
         xCoord = (int)(coordinates.x * quad_res_inverse);
         zCoord = (int)(coordinates.z * quad_res_inverse);
     }
-    public Quadrant GetQuad(Vector3 coordinates)
+
+    public Quadrant GetQuad(Vector3 coordinates, bool expand = true)
     {
         int xTarget, zTarget;
         GetCoords(coordinates, out xTarget, out zTarget);
-        return GetQuad(xTarget, zTarget);
+        return GetQuad(xTarget, zTarget, expand);
     }
-    public Quadrant GetQuad(int xTarget, int zTarget)
+    public Quadrant GetQuad(int xTarget, int zTarget, bool expand = true, bool literal = false)
     {
-        if (xTarget + xRoot < 0 || xTarget + xRoot >= QuadMap.GetLength(0) ||
-            zTarget + zRoot < 0 || zTarget + zRoot >= QuadMap.GetLength(1))
+        int xFinal = xTarget + (literal ? 0 : xRoot);
+        int zFinal = zTarget + (literal ? 0 : zRoot);
+
+        if (xFinal < 0 || xFinal >= QuadMap.GetLength(0) ||
+            zFinal < 0 || zFinal >= QuadMap.GetLength(1))
         {
-            ExpandMap(xTarget + xRoot, zTarget + zRoot);
+            if (expand)
+            {
+                ExpandMap(xFinal, zFinal);
+                xFinal = xTarget + (literal ? 0 : xRoot);
+                zFinal = zTarget + (literal ? 0 : zRoot);
+            }
+                
+            else
+                return null;
         }
 
-        return QuadMap[xTarget + xRoot, zTarget + zRoot];
+        return QuadMap[xFinal, zFinal];
     }
     private void ExpandMap(int x, int z)
     {
@@ -78,8 +96,8 @@ public class Engine : MonoBehaviour
 
         Quadrant[,] newMap = new Quadrant[xWidth, zWidth];
 
-        for(int X = 0; X < xWidth; X++)
-            for(int Z = 0; Z < zWidth; Z++)
+        for (int X = 0; X < xWidth; X++)
+            for (int Z = 0; Z < zWidth; Z++)
             {
                 newMap[X, Z] =
                 (X >= xOffset && X - xOffset < xInit &&
@@ -99,15 +117,25 @@ public class Engine : MonoBehaviour
 
         return location;
     }
-
-    public void BonomQuery(List<Bonom> query, Vector3 position, int radius = 0)
+    private void BonomQuery(int xOrigin, int zOrigin, int radius = 0, bool literal = false)
     {
-        query.Clear();
-        int xOrigin, zOrigin;
-        GetCoords(position, out xOrigin, out zOrigin);
+        Quadrant searching = null;
+
+        for (int i = 0; i < SearchQuery.Length; i++)
+            SearchQuery[i].Clear();
+
         for (int X = xOrigin - radius; X <= xOrigin + radius; X++)
             for (int Z = zOrigin - radius; Z <= zOrigin + radius; Z++)
-                query.AddRange(GetQuad(X, Z));
+            {
+                searching = GetQuad(X, Z, false, literal);
+                if (searching == null)
+                    continue;
+
+                int radiusX = Math.Abs(xOrigin - X);
+                int radiusZ = Math.Abs(zOrigin - Z);
+                int radiusIndex = radiusX > radiusZ ? radiusX : radiusZ;
+                SearchQuery[radiusIndex].AddRange(searching);
+            }
     }
     public void AttackBonom(Bonom attacker, Bonom target)
     {
@@ -135,17 +163,19 @@ public class Engine : MonoBehaviour
     private void AOEDamage(Bonom attacker, Bonom target)
     {
         int damagedCount = 0;
-        BonomQuery(query, target.transform.position, attacker.attk_radius);
-        foreach (Bonom enemy in query)
-        {
-            float distance = Vector3.Distance(enemy.transform.position, target.transform.position);
-            if (distance <= attacker.Stats.AttkRadius)
+        //BonomQuery(target.transform.position, attacker.attk_radius);
+
+        for (int i = 0; i <= attacker.attk_radius; i++)
+            foreach (Bonom enemy in SearchQuery[i])
             {
-                DamageBonom(attacker, enemy);
-                KnockBonom(attacker, enemy, distance == 0 ? attacker.transform.position : target.transform.position);
-                damagedCount++;
+                float distance = Vector3.Distance(enemy.transform.position, target.transform.position);
+                if (distance <= attacker.Stats.AttkRadius)
+                {
+                    DamageBonom(attacker, enemy);
+                    KnockBonom(attacker, enemy, distance == 0 ? attacker.transform.position : target.transform.position);
+                    damagedCount++;
+                }
             }
-        }
     }
 
     public BonomStats RandomBonomStats()
@@ -170,7 +200,7 @@ public class Engine : MonoBehaviour
 
         newBonomObject.SetActive(true);
         newBonomObject.GetComponent<Renderer>().enabled = debug;
-        
+
         requestingTeam.AddBonom(newBonom, random);
 
         newBonomObject.transform.position = SpawnLocation(requestingTeam.TeamIndex);
@@ -204,6 +234,64 @@ public class Engine : MonoBehaviour
             AddBonomToTeam(team, false, debug);
         }
     }
+    private void MapWorkUpdate()
+    {
+        if (QuadMap == null || QuadMap.Length < 1)
+            return;
+
+        
+
+        Quadrant workingQuadrant = GetQuad(xWorkCurrent, zWorkCurrent, false, true);
+        if (workingQuadrant == null)
+        {
+            Debug.LogError(
+                $"bad work coord: ({xWorkCurrent},{zWorkCurrent})\n" +
+                $"QuadMap Size: ({QuadMap.GetLength(0)},{QuadMap.GetLength(1)})\n" +
+                $"consecutive good batches: {good_batches}");
+            good_batches = 0;
+            xWorkCurrent = 0;
+            zWorkCurrent = 0;
+            return;
+        }
+
+        
+
+        good_batches++;
+
+        BonomQuery(xWorkCurrent, zWorkCurrent, QueryRadius, true);
+        for (int i = workingQuadrant.Count - 1; i > -1; i-- )
+        //foreach (Bonom occupant in workingQuadrant)
+            workingQuadrant[i].BatchUpdate();
+
+        xWorkPrevious = xWorkCurrent;
+        zWorkPrevious = zWorkCurrent;
+
+        zWorkCurrent++;                                                         // Single Tick
+        xWorkCurrent += zWorkCurrent >= QuadMap.GetLength(1) ? 1 : 0;           // Tick from Z roll-over
+        zWorkCurrent = zWorkCurrent >= QuadMap.GetLength(1) ? 0 : zWorkCurrent; // Z roll-over
+        xWorkCurrent = xWorkCurrent >= QuadMap.GetLength(0) ? 0 : xWorkCurrent; // X roll-over
+
+        DrawWorkingQuadFrame(xWorkCurrent, zWorkCurrent, Color.red);
+        DrawWorkingQuadFrame(xWorkPrevious, zWorkPrevious, Color.blue);
+    }
+
+    Vector3 o;
+    Vector3 x;
+    Vector3 z;
+    Vector3 O;
+
+    private void DrawWorkingQuadFrame(int xCoord, int zCoord, Color color)
+    {
+        o.x = QuadResolution * (xCoord - xRoot); o.z = QuadResolution * (zCoord - zRoot);
+        x.x = QuadResolution * (xCoord - xRoot + 1); x.z = QuadResolution * (zCoord - zRoot);
+        z.x = QuadResolution * (xCoord - xRoot); z.z = QuadResolution * (zCoord - zRoot + 1);
+        O.x = QuadResolution * (xCoord - xRoot + 1); O.z = QuadResolution * (zCoord - zRoot + 1);
+
+        Debug.DrawLine(o, x, color);
+        Debug.DrawLine(o, z, color);
+        Debug.DrawLine(O, x, color);
+        Debug.DrawLine(O, z, color);
+    }
 
     private bool RecycleBonom(out Bonom oldBonom)
     {
@@ -230,6 +318,26 @@ public class Engine : MonoBehaviour
 
         QuadMap = new Quadrant[0, 0];
         Teams = new Team[SpawnLocations.Length];
+
+        QueryRadius = ProxyRadius;
+        foreach(BonomStats preset in PreSets)
+        {
+            int agro = (int)(preset.AggroRange / QuadResolution);
+            int attk = (int)(preset.AttkRange / QuadResolution);
+            int splash = (int)(preset.AttkRadius / QuadResolution);
+            QueryRadius = agro > QueryRadius ? agro : QueryRadius;
+            QueryRadius = attk > QueryRadius ? attk : QueryRadius;
+            QueryRadius = splash > QueryRadius ? splash : QueryRadius;
+        }
+
+        SearchQuery = new List<Bonom>[QueryRadius + 1]; // +1 for origin
+        for (int i = 0; i < SearchQuery.Length; i++)
+            SearchQuery[i] = new List<Bonom>();
+
+        o.y = WorkHighlightHeight;
+        x.y = WorkHighlightHeight;
+        z.y = WorkHighlightHeight;
+        O.y = WorkHighlightHeight;
 
         for (int i = 0; i < SpawnLocations.Length; i++)
         {
@@ -259,5 +367,6 @@ public class Engine : MonoBehaviour
     void Update()
     {
         SpawnUpdate();
+        MapWorkUpdate();
     }
 }

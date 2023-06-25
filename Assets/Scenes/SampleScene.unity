@@ -3744,6 +3744,8 @@ MonoBehaviour:
     TurnSpeed: 0.05
   SpawnRadius: 10
   AvoidanceScalar: 50
+  QueryRadius: 0
+  ProxyRadius: 1
   MemberCount: 50
   SelectedTeamIndex: 0
   PrefabBonom: {fileID: 1231415057}

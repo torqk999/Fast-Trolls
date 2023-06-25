@@ -33,7 +33,7 @@ public class Bonom : MonoBehaviour
     private int attk_range;
     public int attk_radius;
 
-    private List<Bonom> query = new List<Bonom>();
+    private List<Bonom> proxy_query = new List<Bonom>();
 
     private float health_max_inverse;
     private Vector3 buffer_vector0;
@@ -66,6 +66,7 @@ public class Bonom : MonoBehaviour
         NamePanel = Canvas.transform.GetChild(1).GetComponent<TMP_Text>();
         NamePanel.text = Stats.Type.ToString();
 
+        QuadUpdate();
         MeshInit();
     }
     private void MeshInit()
@@ -133,6 +134,13 @@ public class Bonom : MonoBehaviour
     {
         Grounded = collision.transform.tag == "GROUND" ? false : Grounded;
     }
+    public void BatchUpdate()
+    {
+        QuadUpdate();
+        ProxyUpdate();
+        TargetUpdate();
+        //AttackUpdate();
+    }
 
     #region Sub-Routines
     private void QuadUpdate()
@@ -150,6 +158,12 @@ public class Bonom : MonoBehaviour
         Canvas.transform.rotation = Engine.CameraControl.Camera.rotation;
         HealthSlider.value = Health * health_max_inverse;// Stats.HealthMax;
     }
+    private void ProxyUpdate()
+    {
+        proxy_query.Clear();
+        for (int i = 0; i <= Engine.ProxyRadius; i++)
+            proxy_query.AddRange(Engine.SearchQuery[i]);
+    }
     private void TargetUpdate()
     {
         if (myTarget != null &&
@@ -164,22 +178,22 @@ public class Bonom : MonoBehaviour
             return;
 
         Bonom closest = null;
-        Engine.BonomQuery(query, transform.position, aggro_range);
 
-        foreach (Bonom bonom in query)
-        {
-            if (bonom.myTeam == myTeam)
-                continue;
+        for (int i = 0; i <= aggro_range; i++)
+            foreach (Bonom bonom in Engine.SearchQuery[i])
+            {
+                if (bonom.myTeam == myTeam)
+                    continue;
 
-            buffer_vector0 = transform.position;
-            buffer_vector1 = bonom.transform.position;
-            buffer_vector2 = bonom.transform.position;
+                buffer_vector0 = transform.position;
+                buffer_vector1 = bonom.transform.position;
+                buffer_vector2 = bonom.transform.position;
 
-            if (bonom.Alive &&
-                TargetAggroRange(bonom) &&
-                (closest == null || FastDistanceGreater(closest.transform, bonom.transform, transform)))
-                closest = bonom;
-        }
+                if (bonom.Alive &&
+                    TargetAggroRange(bonom) &&
+                    (closest == null || FastDistanceGreater(closest.transform, bonom.transform, transform)))
+                    closest = bonom;
+            }
 
         myTarget = myTarget == null ? closest : closest == null ? myTarget : FastDistanceGreater(closest.transform, myTarget.transform, transform) ? myTarget : closest;
     }
@@ -203,20 +217,18 @@ public class Bonom : MonoBehaviour
         buffer_vector0 = (myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position) - transform.position;
         float turnFactor = Vector3.Dot(buffer_vector0, transform.forward);
 
-        Engine.BonomQuery(query, transform.position, 1);
-        foreach (Bonom proxy in query)
-        {
-            if (proxy == this || proxy == myTarget || !proxy.Grounded)
-                continue;
-        
-            buffer_vector1 = proxy.transform.position - transform.position;
-            buffer_vector0 -= buffer_vector1.normalized * (Engine.AvoidanceScalar / (float)FastDistance(ref buffer_vector1));
-        }
+        //for (int i = 0; i <= 1; i++)
+            foreach (Bonom proxy in proxy_query)
+            {
+                if (proxy == this || proxy == myTarget || !proxy.Grounded)
+                    continue;
+
+                buffer_vector1 = proxy.transform.position - transform.position;
+                buffer_vector0 -= buffer_vector1.normalized * (Engine.AvoidanceScalar / (float)FastDistance(ref buffer_vector1));
+            }
 
         buffer_vector0 = (buffer_vector0.normalized * Stats.MoveSpeed) - myRigidBody.velocity;
         buffer_vector0 = buffer_vector0.normalized * Stats.MoveAccel * turnFactor;
-
-        //Debug.DrawLine(transform.position, transform.position + buffer_vector0, Color.green);
 
         myRigidBody.AddForce(buffer_vector0);
     }
@@ -278,8 +290,8 @@ public class Bonom : MonoBehaviour
         if (!Alive || !Grounded)
             return;
 
-        QuadUpdate();
-        TargetUpdate();
+        //QuadUpdate();
+        //TargetUpdate();
         MoveUpdate();
         TurnUpdate();
         AttackUpdate();
