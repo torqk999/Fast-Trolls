@@ -28,9 +28,11 @@ public class Bonom : MonoBehaviour
     public bool Grounded = false;
     
     public List<Transform> Touching = new List<Transform>();
+    private List<Bonom> query = new List<Bonom>();
 
-    private int aggro_radius;
-    private int attk_radius;
+    private int aggro_range;
+    private int attk_range;
+    public int attk_radius;
     private float health_max_inverse;
     private Vector3 buffer_vector0;
     private Vector3 buffer_vector1;
@@ -46,9 +48,12 @@ public class Bonom : MonoBehaviour
         Stats = stats;
         myTeam = team;
         myTarget = null;
-        //myQuad = myQuad == null ? Engine.GetQuad(transform.position) : myQuad;
+
         Health = Stats.HealthMax;
         health_max_inverse = 1 / Stats.HealthMax;
+        aggro_range = (int)(Stats.AggroRange / Engine.QuadResolution);
+        attk_range = (int)(Stats.AttkRange / Engine.QuadResolution);
+        attk_radius = (int)(Stats.AttkRadius / Engine.QuadResolution);
         
         Touching.Clear();
         DeadQued = false;
@@ -69,9 +74,9 @@ public class Bonom : MonoBehaviour
         buffer_vector1 = transform.position;
         return FastDistance(ref buffer_vector0, ref buffer_vector1) < Math.Pow(Stats.AggroRange, 2);
     }
-    private bool TargetAttkRange(Bonom target)
+    private bool TargetAttkRange(Transform target)
     {
-        buffer_vector0 = target.transform.position;
+        buffer_vector0 = target.position;
         buffer_vector1 = transform.position;
         return FastDistance(ref buffer_vector0, ref buffer_vector1) < Math.Pow(Stats.AttkRange, 2);
     }
@@ -144,21 +149,25 @@ public class Bonom : MonoBehaviour
         if (myTarget != null)
             Debug.DrawLine(transform.position, myTarget.transform.position, Color.black);
 
-        if (myTarget != null && TargetAttkRange(myTarget))
+        if (myTarget != null && TargetAttkRange(myTarget.transform))
             return;
 
         Bonom closest = null;
+        Engine.BonomQuery(query, transform.position, aggro_range);
 
-        foreach(Bonom enemy in myTeam.Enemies)
+        foreach(Bonom bonom in query)
         {
-            buffer_vector0 = transform.position;
-            buffer_vector1 = enemy.transform.position;
-            buffer_vector2 = enemy.transform.position;
+            if (bonom.myTeam == myTeam)
+                continue;
 
-            if (enemy.Alive &&
-                TargetAggroRange(enemy) &&
-                (closest == null || FastDistanceGreater(closest.transform, enemy.transform, transform)/*FastDistance(closest.transform.position, transform.position) > FastDistance(enemy.transform.position, transform.position)*/))
-                closest = enemy;
+            buffer_vector0 = transform.position;
+            buffer_vector1 = bonom.transform.position;
+            buffer_vector2 = bonom.transform.position;
+
+            if (bonom.Alive &&
+                TargetAggroRange(bonom) &&
+                (closest == null || FastDistanceGreater(closest.transform, bonom.transform, transform)/*FastDistance(closest.transform.position, transform.position) > FastDistance(enemy.transform.position, transform.position)*/))
+                closest = bonom;
         }
 
         myTarget = myTarget == null || FastDistanceGreater(closest.transform, myTarget.transform, transform)/*FastDistance(Target.transform.position, transform.position) > FastDistance(closest.transform.position, transform.position)*/ ? closest : myTarget;
@@ -179,9 +188,10 @@ public class Bonom : MonoBehaviour
     }
     private void MoveUpdate()
     {
-        if (myRigidBody == null ||
+        if (//myRigidBody == null ||
             !Alive || !Grounded ||
-            (myTarget != null && TargetAttkRange(myTarget)/*FastDistance(Target.transform.position, transform.position) < Math.Pow(Stats.AttkRange,2)*/))
+            (myTarget != null && TargetAttkRange(myTarget.transform)) ||
+            TargetAttkRange(myTeam.Flag.transform))
             return;
 
         buffer_vector0 = (myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position) - transform.position;
@@ -191,9 +201,6 @@ public class Bonom : MonoBehaviour
 
         buffer_vector0 = (buffer_vector0.normalized * Stats.MoveSpeed) - myRigidBody.velocity;
         buffer_vector0 = buffer_vector0.normalized * Stats.MoveAccel * turnFactor;
-
-        //buffer_vector0 = (Vector3.Normalize(buffer_vector0) * Stats.MoveSpeed) - myRigidBody.velocity;
-        //buffer_vector0 = Vector3.Normalize(buffer_vector0) * Stats.MoveAccel * turnFactor;
 
         myRigidBody.AddForce(buffer_vector0);
     }
@@ -205,7 +212,7 @@ public class Bonom : MonoBehaviour
         if (myTarget == null ||
             LastAttack.Ticks + Stats.AttkDelayTicks > DateTime.Now.Ticks ||
             !myTarget.Alive ||
-            !TargetAttkRange(myTarget))
+            !TargetAttkRange(myTarget.transform))
             return;
 
         Engine.AttackBonom(this, myTarget);
@@ -225,9 +232,9 @@ public class Bonom : MonoBehaviour
             DeadQued = true;
             Engine.Dead.Add(this);
 
-            foreach (Team enemyTeam in Engine.Teams)
-                if (enemyTeam != myTeam)
-                    enemyTeam.RemoveEnemy(this);
+            //foreach (Team enemyTeam in Engine.Teams)
+            //    if (enemyTeam != myTeam)
+            //        enemyTeam.RemoveEnemy(this);
 
             myTeam.RemoveBonom(this);
         }

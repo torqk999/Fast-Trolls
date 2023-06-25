@@ -2568,6 +2568,7 @@ MonoBehaviour:
     DamageRecieved: 0
     DamageHealed: 0
     KillCount: 0
+  myTarget: {fileID: 0}
   Stats:
     Type: 0
     Sprite: {fileID: 0}
@@ -2588,7 +2589,6 @@ MonoBehaviour:
     TurnSpeed: 0
   Health: 0
   Grounded: 0
-  Target: {fileID: 0}
   Touching: []
 --- !u!54 &1231415058
 Rigidbody:
@@ -3679,6 +3679,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7315c27bfda854a4cb0a38bc4c213b19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  QuadResolution: 10
   Dead: []
   Teams: []
   SpawnLocations:
@@ -3746,6 +3747,7 @@ MonoBehaviour:
   UIManager: {fileID: 917501649}
   CameraControl: {fileID: 497805177}
   BodyExpirationTicks: 50000000
+  body_exp_inverse: 0
   SpawnDelayTicks: 10000000
   RegenDelayTicks: 0
   Named: 0

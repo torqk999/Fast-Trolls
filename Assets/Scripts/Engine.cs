@@ -3,29 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[Serializable]
-public class Quadrant : List<Bonom>
-{
-    public void AddBonom(Bonom newBonom)
-    {
-        newBonom.myQuad = this;
-        Add(newBonom);
-    }
-
-    public bool RemoveBonom(Bonom newBonom)
-    {
-        newBonom.myQuad = null;
-        return Remove(newBonom);
-    }
-}
-
 public class Engine : MonoBehaviour
 {
     public Quadrant[,] QuadMap;
-    private int xRoot, zRoot;
+    public int xRoot, zRoot;
+    public int xWidth, zWidth;
     public int QuadResolution;
 
     public List<Bonom> Dead = new List<Bonom>();
+    private List<Bonom> query = new List<Bonom>();
 
     public Team[] Teams;
     public Transform[] SpawnLocations;
@@ -47,27 +33,42 @@ public class Engine : MonoBehaviour
     public bool Named;
     public Team SelectedTeam => Teams[SelectedTeamIndex];
 
+    public void GetCoords(Vector3 coordinates, out int xCoord, out int zCoord)
+    {
+        xCoord = ((int)coordinates.x / QuadResolution);// + xRoot;
+        zCoord = ((int)coordinates.z / QuadResolution);// + zRoot;
+    }
     public Quadrant GetQuad(Vector3 coordinates)
     {
-        int xTarget = ((int)coordinates.x / QuadResolution) + xRoot;
-        int zTarget = ((int)coordinates.z / QuadResolution) + zRoot;
+        int xTarget, zTarget;
+        GetCoords(coordinates, out xTarget, out zTarget);
+        return GetQuad(xTarget, zTarget);
 
-        if (xTarget < 0 || xTarget >= QuadMap.GetLength(0) ||
-            zTarget < 0 || zTarget >= QuadMap.GetLength(1))
+        //if (xTarget < 0 || xTarget >= QuadMap.GetLength(0) ||
+        //    zTarget < 0 || zTarget >= QuadMap.GetLength(1))
+        //{
+        //    ExpandMap(xTarget, zTarget);
+        //    GetCoords(coordinates, out xTarget, out zTarget);
+        //}
+        //
+        //return QuadMap[xTarget, zTarget];
+    }
+    public Quadrant GetQuad(int xTarget, int zTarget)
+    {
+        if (xTarget + xRoot < 0 || xTarget + xRoot >= QuadMap.GetLength(0) ||
+            zTarget + zRoot < 0 || zTarget + zRoot >= QuadMap.GetLength(1))
         {
-            ExpandMap(xTarget, zTarget);
-            xTarget = ((int)coordinates.x / QuadResolution) + xRoot;
-            zTarget = ((int)coordinates.z / QuadResolution) + zRoot;
+            ExpandMap(xTarget + xRoot, zTarget + zRoot);
         }
 
-        return QuadMap[xTarget, zTarget];
+        return QuadMap[xTarget + xRoot, zTarget + zRoot];
     }
     private void ExpandMap(int x, int z)
     {
         int xInit = QuadMap.GetLength(0);
         int zInit = QuadMap.GetLength(1);
-        int xWidth = x < 0 ? xInit - x : x >= xInit ? x : xInit;
-        int zWidth = z < 0 ? zInit - z : z >= zInit ? z : zInit;
+        /*int*/ xWidth = x < 0 ? xInit - x : x >= xInit ? x + 1 : xInit;
+        /*int*/ zWidth = z < 0 ? zInit - z : z >= zInit ? z + 1 : zInit;
         int xOffset = x < 0 ? -x : 0;
         int zOffset = z < 0 ? -z : 0;
         xRoot -= x < 0 ? x : 0;
@@ -79,7 +80,8 @@ public class Engine : MonoBehaviour
             for(int Z = 0; Z < zWidth; Z++)
             {
                 newMap[X, Z] =
-                (X >= xOffset && X < xOffset + xWidth && Z >= zOffset && Z < zOffset + zWidth) ?
+                (X >= xOffset && X - xOffset < xInit &&
+                Z >= zOffset && Z - zOffset < zInit) ?
                 QuadMap[X - xOffset, Z - zOffset] :
                 new Quadrant();
             }
@@ -96,6 +98,15 @@ public class Engine : MonoBehaviour
         return location;
     }
 
+    public void BonomQuery(List<Bonom> query, Vector3 position, int radius)
+    {
+        query.Clear();
+        int xOrigin, zOrigin;
+        GetCoords(position, out xOrigin, out zOrigin);
+        for (int X = xOrigin - radius; X <= xOrigin + radius; X++)
+            for (int Z = zOrigin - radius; Z <= zOrigin + radius; Z++)
+                query.AddRange(GetQuad(X, Z));
+    }
     public void AttackBonom(Bonom attacker, Bonom target)
     {
         AOEDamage(attacker, target);
@@ -122,7 +133,8 @@ public class Engine : MonoBehaviour
     private void AOEDamage(Bonom attacker, Bonom target)
     {
         int damagedCount = 0;
-        foreach (Bonom enemy in attacker.myTeam.Enemies)
+        BonomQuery(query, target.transform.position, attacker.attk_radius);
+        foreach (Bonom enemy in query)
         {
             float distance = Vector3.Distance(enemy.transform.position, target.transform.position);
             if (distance <= attacker.Stats.AttkRadius)
@@ -159,12 +171,12 @@ public class Engine : MonoBehaviour
         
         requestingTeam.AddBonom(newBonom, random);
 
-        foreach (Team enemyTeam in Teams)
-            if (enemyTeam != requestingTeam)
-                enemyTeam.AddEnemy(newBonom);
+        //foreach (Team enemyTeam in Teams)
+        //    if (enemyTeam != requestingTeam)
+        //        enemyTeam.AddEnemy(newBonom);
 
         newBonomObject.transform.position = SpawnLocation(requestingTeam.TeamIndex);
-        //GetQuad(newBonomObject.transform.position).Add(newBonom);
+        GetQuad(newBonomObject.transform.position).Add(newBonom);
 
         if (newBonom.Stats.Prefab != null)
         {

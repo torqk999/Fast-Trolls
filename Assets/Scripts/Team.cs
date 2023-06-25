@@ -10,7 +10,7 @@ public class Team
     public DateTime LastSpawn;
     public Color TeamColor;
     public List<Bonom> Members = new List<Bonom>();
-    public List<Bonom> Enemies = new List<Bonom>();
+    //public List<Bonom> Enemies = new List<Bonom>();
     public Engine Engine;
     public Flag Flag;
     public Squad[] Squads;
@@ -77,15 +77,15 @@ public class Team
         //Debug.Log($"{targetSquad.Type} : {targetSquad.Count}");
     }
 
-    public void AddEnemy(Bonom enemy)
-    {
-        Enemies.Add(enemy);
-    }
-
-    public void RemoveEnemy(Bonom enemy)
-    {
-        Enemies.Remove(enemy);
-    }
+    //public void AddEnemy(Bonom enemy)
+    //{
+    //    Enemies.Add(enemy);
+    //}
+    //
+    //public void RemoveEnemy(Bonom enemy)
+    //{
+    //    Enemies.Remove(enemy);
+    //}
 
     public void RemoveBonom(Bonom targetBonom)
     {
