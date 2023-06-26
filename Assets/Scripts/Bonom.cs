@@ -269,7 +269,7 @@ public class Bonom : MonoBehaviour
             myDebugRenderer.material.color = buffer_color;
         }
 
-        gameObject.SetActive(Engine.BodyExpirationTicks - deathLength > 0);
+        gameObject.SetActive(!Alive && Engine.BodyExpirationTicks - deathLength > 0);
     }
     #endregion
 
