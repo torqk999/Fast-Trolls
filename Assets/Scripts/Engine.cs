@@ -239,40 +239,45 @@ public class Engine : MonoBehaviour
         if (QuadMap == null || QuadMap.Length < 1)
             return;
 
-        
+        Quadrant workingQuadrant = null;
+        xWorkPrevious = xWorkCurrent;
+        zWorkPrevious = zWorkCurrent;
 
-        Quadrant workingQuadrant = GetQuad(xWorkCurrent, zWorkCurrent, false, true);
-        if (workingQuadrant == null)
+        for (int i = 0; i < QuadMap.Length; i++)
         {
-            Debug.LogError(
-                $"bad work coord: ({xWorkCurrent},{zWorkCurrent})\n" +
-                $"QuadMap Size: ({QuadMap.GetLength(0)},{QuadMap.GetLength(1)})\n" +
-                $"consecutive good batches: {good_batches}");
-            good_batches = 0;
-            xWorkCurrent = 0;
-            zWorkCurrent = 0;
-            return;
+            AdvanceWorkCoords();
+            workingQuadrant = GetQuad(xWorkCurrent, zWorkCurrent, false, true);
+            if (workingQuadrant == null)
+            {
+                Debug.LogError(
+                    $"bad work coord: ({xWorkCurrent},{zWorkCurrent})\n" +
+                    $"QuadMap Size: ({QuadMap.GetLength(0)},{QuadMap.GetLength(1)})\n" +
+                    $"consecutive good batches: {good_batches}");
+                good_batches = 0;
+                xWorkCurrent = 0;
+                zWorkCurrent = 0;
+                return;
+            }
+            if (workingQuadrant.Count > 0)
+                break;
         }
-
-        
 
         good_batches++;
 
         BonomQuery(xWorkCurrent, zWorkCurrent, QueryRadius, true);
         for (int i = workingQuadrant.Count - 1; i > -1; i-- )
-        //foreach (Bonom occupant in workingQuadrant)
             workingQuadrant[i].BatchUpdate();
 
-        xWorkPrevious = xWorkCurrent;
-        zWorkPrevious = zWorkCurrent;
+        DrawWorkingQuadFrame(xWorkCurrent, zWorkCurrent, Color.red);
+        DrawWorkingQuadFrame(xWorkPrevious, zWorkPrevious, Color.blue);
+    }
 
+    private void AdvanceWorkCoords()
+    {
         zWorkCurrent++;                                                         // Single Tick
         xWorkCurrent += zWorkCurrent >= QuadMap.GetLength(1) ? 1 : 0;           // Tick from Z roll-over
         zWorkCurrent = zWorkCurrent >= QuadMap.GetLength(1) ? 0 : zWorkCurrent; // Z roll-over
         xWorkCurrent = xWorkCurrent >= QuadMap.GetLength(0) ? 0 : xWorkCurrent; // X roll-over
-
-        DrawWorkingQuadFrame(xWorkCurrent, zWorkCurrent, Color.red);
-        DrawWorkingQuadFrame(xWorkPrevious, zWorkPrevious, Color.blue);
     }
 
     Vector3 o;
