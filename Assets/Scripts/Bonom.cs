@@ -136,9 +136,9 @@ public class Bonom : MonoBehaviour
     }
     public void BatchUpdate()
     {
-        QuadUpdate();
         ProxyUpdate();
         TargetUpdate();
+        QuadUpdate();
         //AttackUpdate();
     }
 
@@ -171,8 +171,8 @@ public class Bonom : MonoBehaviour
             !TargetAggroRange(myTarget)))
             myTarget = null;
 
-        //if (myTarget != null)
-        //    Debug.DrawLine(transform.position, myTarget.transform.position, Color.black);
+        if (myTarget != null)
+            Debug.DrawLine(transform.position, myTarget.transform.position, Color.black);
 
         if (myTarget != null && TargetAttkRange(myTarget.transform))
             return;
@@ -185,9 +185,9 @@ public class Bonom : MonoBehaviour
                 if (bonom.myTeam == myTeam)
                     continue;
 
-                buffer_vector0 = transform.position;
-                buffer_vector1 = bonom.transform.position;
-                buffer_vector2 = bonom.transform.position;
+                //buffer_vector0 = transform.position;
+                //buffer_vector1 = bonom.transform.position;
+                //buffer_vector2 = bonom.transform.position;
 
                 if (bonom.Alive &&
                     TargetAggroRange(bonom) &&
@@ -220,7 +220,7 @@ public class Bonom : MonoBehaviour
         //for (int i = 0; i <= 1; i++)
             foreach (Bonom proxy in proxy_query)
             {
-                if (proxy == this || proxy == myTarget || !proxy.Grounded)
+                if (proxy == this || proxy == myTarget || !proxy.Alive)
                     continue;
 
                 buffer_vector1 = proxy.transform.position - transform.position;
