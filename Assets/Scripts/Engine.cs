@@ -16,6 +16,7 @@ public class Engine : MonoBehaviour
 
     public List<Bonom> Dead = new List<Bonom>();
     public List<Bonom>[] SearchQuery;
+    public List<Bonom>[] AOEQuery;
 
     public Team[] Teams;
     public Transform[] SpawnLocations;
@@ -24,7 +25,8 @@ public class Engine : MonoBehaviour
     public float SpawnRadius;
     public float AvoidanceScalar;
     public float WorkHighlightHeight;
-    public int QueryRadius;
+    public int SearchQueryRadius;
+    public int AOEQueryRadius;
     public int ProxyRadius;
     public int MemberCount;
     public int SelectedTeamIndex;
@@ -117,12 +119,12 @@ public class Engine : MonoBehaviour
 
         return location;
     }
-    private void BonomQuery(int xOrigin, int zOrigin, int radius = 0, bool literal = false)
+    private void BonomQuery(List<Bonom>[] lists, int xOrigin, int zOrigin, int radius = 0, bool literal = false)
     {
         Quadrant searching = null;
 
-        for (int i = 0; i < SearchQuery.Length; i++)
-            SearchQuery[i].Clear();
+        for (int i = 0; i < lists.Length; i++)
+            lists[i].Clear();
 
         for (int X = xOrigin - radius; X <= xOrigin + radius; X++)
             for (int Z = zOrigin - radius; Z <= zOrigin + radius; Z++)
@@ -134,13 +136,15 @@ public class Engine : MonoBehaviour
                 int radiusX = Math.Abs(xOrigin - X);
                 int radiusZ = Math.Abs(zOrigin - Z);
                 int radiusIndex = radiusX > radiusZ ? radiusX : radiusZ;
-                SearchQuery[radiusIndex].AddRange(searching);
+                lists[radiusIndex].AddRange(searching);
             }
     }
     public void AttackBonom(Bonom attacker, Bonom target)
     {
-        AOEDamage(attacker, target);
-        attacker.myTeam.KillCount += target.Health <= 0 ? 1 : 0;
+        if (attacker.Stats.AttkRadius > 0)
+            AOEDamage(attacker, target);
+        else
+            DamageBonom(attacker, target);
     }
     private void DamageBonom(Bonom attacker, Bonom target)
     {
@@ -148,6 +152,7 @@ public class Engine : MonoBehaviour
         target.Health -= dmg;
         target.myTeam.DamageRecieved += dmg;
         attacker.myTeam.DamageDealt += dmg;
+        attacker.myTeam.KillCount += target.Health <= 0 ? 1 : 0;
     }
     private void KnockBonom(Bonom attacker, Bonom target, Vector3 source)
     {
@@ -163,10 +168,12 @@ public class Engine : MonoBehaviour
     private void AOEDamage(Bonom attacker, Bonom target)
     {
         int damagedCount = 0;
-        //BonomQuery(target.transform.position, attacker.attk_radius);
+        int xCoord, zCoord;
+        GetCoords(target.transform.position, out xCoord, out zCoord);
+        BonomQuery(AOEQuery, xCoord, zCoord, attacker.attk_radius);
 
         for (int i = 0; i <= attacker.attk_radius; i++)
-            foreach (Bonom enemy in SearchQuery[i])
+            foreach (Bonom enemy in AOEQuery[i])
             {
                 float distance = Vector3.Distance(enemy.transform.position, target.transform.position);
                 if (distance <= attacker.Stats.AttkRadius)
@@ -264,7 +271,7 @@ public class Engine : MonoBehaviour
 
         good_batches++;
 
-        BonomQuery(xWorkCurrent, zWorkCurrent, QueryRadius, true);
+        BonomQuery(SearchQuery, xWorkCurrent, zWorkCurrent, SearchQueryRadius, true);
         for (int i = workingQuadrant.Count - 1; i > -1; i-- )
             workingQuadrant[i].BatchUpdate();
 
@@ -324,20 +331,22 @@ public class Engine : MonoBehaviour
         QuadMap = new Quadrant[0, 0];
         Teams = new Team[SpawnLocations.Length];
 
-        QueryRadius = ProxyRadius;
+        SearchQueryRadius = ProxyRadius;
         foreach(BonomStats preset in PreSets)
         {
             int agro = (int)(preset.AggroRange / QuadResolution);
-            int attk = (int)(preset.AttkRange / QuadResolution);
             int splash = (int)(preset.AttkRadius / QuadResolution);
-            QueryRadius = agro > QueryRadius ? agro : QueryRadius;
-            QueryRadius = attk > QueryRadius ? attk : QueryRadius;
-            QueryRadius = splash > QueryRadius ? splash : QueryRadius;
+            SearchQueryRadius = agro > SearchQueryRadius ? agro : SearchQueryRadius;
+            AOEQueryRadius = splash > AOEQueryRadius ? splash : AOEQueryRadius;
         }
 
-        SearchQuery = new List<Bonom>[QueryRadius + 1]; // +1 for origin
+        SearchQuery = new List<Bonom>[SearchQueryRadius + 1]; // +1 for origin
         for (int i = 0; i < SearchQuery.Length; i++)
             SearchQuery[i] = new List<Bonom>();
+
+        AOEQuery = new List<Bonom>[AOEQueryRadius + 1];
+        for (int i = 0; i < AOEQuery.Length; i++)
+            AOEQuery[i] = new List<Bonom>();
 
         o.y = WorkHighlightHeight;
         x.y = WorkHighlightHeight;
