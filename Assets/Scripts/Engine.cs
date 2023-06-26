@@ -148,11 +148,14 @@ public class Engine : MonoBehaviour
     }
     private void DamageBonom(Bonom attacker, Bonom target)
     {
+        if (!target.Alive)
+            return;
+
         float dmg = attacker.Stats.AttkDamage;
         target.Health -= dmg;
         target.myTeam.DamageRecieved += dmg;
         attacker.myTeam.DamageDealt += dmg;
-        attacker.myTeam.KillCount += target.Health <= 0 ? 1 : 0;
+        attacker.myTeam.KillCount += target.Alive ? 0 : 1;
     }
     private void KnockBonom(Bonom attacker, Bonom target, Vector3 source)
     {

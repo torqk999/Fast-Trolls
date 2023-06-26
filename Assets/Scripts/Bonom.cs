@@ -120,16 +120,14 @@ public class Bonom : MonoBehaviour
     {
         return Math.Pow(v.x, 2) + Math.Pow(v.y, 2) + Math.Pow(v.z, 2);
     }
-    private void OnCollisionStay(Collision collision)
-    {
-        Grounded = collision.transform.tag == "GROUND";
-    }
-    //private void OnCollisionEnter(Collision collision)
+    //private void OnCollisionStay(Collision collision)
     //{
-    //    Grounded = collision.transform.tag == "GROUND";
-    //    //if (collision.transform != this && collision.transform.tag == "BONOM")
-    //    //    Touching.Add(collision.transform);
+    //    Grounded = collision.transform.tag == "GROUND" ? true : Grounded;
     //}
+    private void OnCollisionEnter(Collision collision)
+    {
+        Grounded = collision.transform.tag == "GROUND" ? true : Grounded;
+    }
     private void OnCollisionExit(Collision collision)
     {
         Grounded = collision.transform.tag == "GROUND" ? false : Grounded;
