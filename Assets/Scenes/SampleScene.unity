@@ -3744,7 +3744,9 @@ MonoBehaviour:
     TurnSpeed: 0.05
   SpawnRadius: 10
   AvoidanceScalar: 50
-  QueryRadius: 0
+  WorkHighlightHeight: 0
+  SearchQueryRadius: 0
+  AOEQueryRadius: 0
   ProxyRadius: 1
   MemberCount: 50
   SelectedTeamIndex: 0
@@ -3757,7 +3759,7 @@ MonoBehaviour:
   SpawnDelayTicks: 10000000
   RegenDelayTicks: 0
   Named: 0
-  debug: 1
+  debug: 0
 --- !u!4 &1897847843
 Transform:
   m_ObjectHideFlags: 0

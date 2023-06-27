@@ -214,16 +214,17 @@ public class Bonom : MonoBehaviour
 
         buffer_vector0 = (myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position) - transform.position;
         float turnFactor = Vector3.Dot(buffer_vector0, transform.forward);
+        double avoidance = FastDistance(ref buffer_vector0);
+        avoidance = avoidance > Engine.AvoidanceMax ? Engine.AvoidanceMax : avoidance;
 
-        //for (int i = 0; i <= 1; i++)
-            foreach (Bonom proxy in proxy_query)
-            {
-                if (proxy == this || proxy == myTarget || !proxy.Alive)
-                    continue;
+        foreach (Bonom proxy in proxy_query)
+        {
+            if (proxy == this || proxy == myTarget || !proxy.Alive)
+                continue;
 
-                buffer_vector1 = proxy.transform.position - transform.position;
-                buffer_vector0 -= buffer_vector1.normalized * (Engine.AvoidanceScalar / (float)FastDistance(ref buffer_vector1));
-            }
+            buffer_vector1 = proxy.transform.position - transform.position;
+            buffer_vector0 -= buffer_vector1.normalized * (float)(avoidance / FastDistance(ref buffer_vector1));
+        }
 
         buffer_vector0 = (buffer_vector0.normalized * Stats.MoveSpeed) - myRigidBody.velocity;
         buffer_vector0 = buffer_vector0.normalized * Stats.MoveAccel * turnFactor;
@@ -269,7 +270,7 @@ public class Bonom : MonoBehaviour
             myDebugRenderer.material.color = buffer_color;
         }
 
-        gameObject.SetActive(!Alive && Engine.BodyExpirationTicks - deathLength > 0);
+        gameObject.SetActive(Alive || Engine.BodyExpirationTicks - deathLength > 0);
     }
     #endregion
 

@@ -23,7 +23,7 @@ public class Engine : MonoBehaviour
     public BonomStats[] PreSets;
 
     public float SpawnRadius;
-    public float AvoidanceScalar;
+    public float AvoidanceMax;
     public float WorkHighlightHeight;
     public int SearchQueryRadius;
     public int AOEQueryRadius;
@@ -144,7 +144,11 @@ public class Engine : MonoBehaviour
         if (attacker.Stats.AttkRadius > 0)
             AOEDamage(attacker, target);
         else
+        {
             DamageBonom(attacker, target);
+            KnockBonom(attacker, target, target.transform.position);
+        }
+            
     }
     private void DamageBonom(Bonom attacker, Bonom target)
     {
