@@ -139,10 +139,20 @@ public class Bonom : MonoBehaviour
         QuadUpdate();
         //AttackUpdate();
     }
+    public void SingleUpdate()
+    {
+        CanvasUpdate();
+        LifeUpdate();
+        MoveUpdate();
+        TurnUpdate();
+        AttackUpdate();
+    }
 
     #region Sub-Routines
     private void QuadUpdate()
     {
+        if (!Alive)
+            return;
         Quadrant check = Engine.GetQuad(transform.position);
         if (check != myQuad)
         {
@@ -263,6 +273,7 @@ public class Bonom : MonoBehaviour
             DeadQued = true;
             Engine.Dead.Add(this);
             myTeam.RemoveBonom(this);
+            myQuad.RemoveBonom(this);
         }
 
         myTeam.DamageHealed += Health - oldHealth;
@@ -289,16 +300,16 @@ public class Bonom : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        CanvasUpdate();
-        LifeUpdate();
+        //CanvasUpdate();
+        //LifeUpdate();
 
-        if (!Alive || !Grounded)
-            return;
+        //if (!Alive || !Grounded)
+        //    return;
 
         //QuadUpdate();
         //TargetUpdate();
-        MoveUpdate();
-        TurnUpdate();
-        AttackUpdate();
+        //MoveUpdate();
+        //TurnUpdate();
+        //AttackUpdate();
     }
 }

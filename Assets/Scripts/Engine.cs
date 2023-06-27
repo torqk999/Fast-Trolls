@@ -45,6 +45,7 @@ public class Engine : MonoBehaviour
     public bool Named;
     public bool debug;
     public bool MapWorkActive;
+    public bool BonomWorkActive;
     public bool MapInit;
     public Team SelectedTeam => Teams[SelectedTeamIndex];
     public int GetTypeIndex(string requestType)
@@ -250,7 +251,7 @@ public class Engine : MonoBehaviour
             AddBonomToTeam(team, false, debug);
         }
     }
-    private async void MapWorkUpdate()
+    private async void MapWork()
     {
         while(MapWorkActive)
         {
@@ -303,6 +304,16 @@ public class Engine : MonoBehaviour
 
             DrawWorkingQuadFrame(xWorkCurrent, zWorkCurrent, Color.red);
             DrawWorkingQuadFrame(xWorkPrevious, zWorkPrevious, Color.blue);
+            await Task.Yield();
+        }
+    }
+
+    private async void BonomWork(int index)
+    {
+        while (BonomWorkActive)
+        {
+            for (int i = Teams[index].Members.Count - 1; i > -1; i--)
+                Teams[index].Members[i].SingleUpdate();
             await Task.Yield();
         }
     }
@@ -380,6 +391,7 @@ public class Engine : MonoBehaviour
         x.y = WorkHighlightHeight;
         z.y = WorkHighlightHeight;
         O.y = WorkHighlightHeight;
+        BonomWorkActive = true;
 
         for (int i = 0; i < SpawnLocations.Length; i++)
         {
@@ -394,6 +406,7 @@ public class Engine : MonoBehaviour
                 color = spawnMesh.material.color;
 
             Teams[i] = new Team(this, i, color, Named ? SpawnLocations[i].name : null);
+            BonomWork(i);
         }
 
         UIManager.PopulateTeamSelectionButtons();
@@ -404,8 +417,9 @@ public class Engine : MonoBehaviour
         body_exp_inverse = 1f / BodyExpirationTicks;
         quad_res_inverse = 1f / QuadResolution;
 
+        
         MapWorkActive = true;
-        MapWorkUpdate();
+        MapWork();
         //StartCoroutine(MapWorkUpdate());
     }
 
