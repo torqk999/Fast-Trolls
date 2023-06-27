@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -43,6 +44,8 @@ public class Engine : MonoBehaviour
 
     public bool Named;
     public bool debug;
+    public bool MapWorkActive;
+    public bool MapInit;
     public Team SelectedTeam => Teams[SelectedTeamIndex];
     public int GetTypeIndex(string requestType)
     {
@@ -147,8 +150,7 @@ public class Engine : MonoBehaviour
         {
             DamageBonom(attacker, target);
             KnockBonom(attacker, target, target.transform.position);
-        }
-            
+        } 
     }
     private void DamageBonom(Bonom attacker, Bonom target)
     {
@@ -248,42 +250,61 @@ public class Engine : MonoBehaviour
             AddBonomToTeam(team, false, debug);
         }
     }
-    private void MapWorkUpdate()
+    private async void MapWorkUpdate()
     {
-        if (QuadMap == null || QuadMap.Length < 1)
-            return;
-
-        Quadrant workingQuadrant = null;
-        xWorkPrevious = xWorkCurrent;
-        zWorkPrevious = zWorkCurrent;
-
-        for (int i = 0; i < QuadMap.Length; i++)
+        while(MapWorkActive)
         {
-            AdvanceWorkCoords();
-            workingQuadrant = GetQuad(xWorkCurrent, zWorkCurrent, false, true);
-            if (workingQuadrant == null)
+            if (QuadMap == null)
             {
-                Debug.LogError(
-                    $"bad work coord: ({xWorkCurrent},{zWorkCurrent})\n" +
-                    $"QuadMap Size: ({QuadMap.GetLength(0)},{QuadMap.GetLength(1)})\n" +
-                    $"consecutive good batches: {good_batches}");
-                good_batches = 0;
-                xWorkCurrent = 0;
-                zWorkCurrent = 0;
-                return;
+                Debug.LogError("Null map");
+                MapWorkActive = false;
+                continue;
             }
-            if (workingQuadrant.Count > 0)
-                break;
+
+            if (QuadMap.Length < 1)
+            {
+                Debug.Log("No MapWork");
+                await Task.Yield();
+                continue;
+            }
+
+            Quadrant workingQuadrant = null;
+            xWorkPrevious = xWorkCurrent;
+            zWorkPrevious = zWorkCurrent;
+
+            for (int i = 0; i < QuadMap.Length; i++)
+            {
+                AdvanceWorkCoords();
+                workingQuadrant = GetQuad(xWorkCurrent, zWorkCurrent, false, true);
+                if (workingQuadrant == null)
+                {
+                    Debug.LogError(
+                        $"bad work coord: ({xWorkCurrent},{zWorkCurrent})\n" +
+                        $"QuadMap Size: ({QuadMap.GetLength(0)},{QuadMap.GetLength(1)})\n" +
+                        $"consecutive good batches: {good_batches}");
+                    good_batches = 0;
+                    xWorkCurrent = 0;
+                    zWorkCurrent = 0;
+                    MapWorkActive = false;
+                    break;
+                }
+                if (workingQuadrant.Count > 0)
+                    break;
+            }
+
+            if (!MapWorkActive)
+                continue;
+
+            good_batches++;
+
+            BonomQuery(SearchQuery, xWorkCurrent, zWorkCurrent, SearchQueryRadius, true);
+            for (int i = workingQuadrant.Count - 1; i > -1; i--)
+                workingQuadrant[i].BatchUpdate();
+
+            DrawWorkingQuadFrame(xWorkCurrent, zWorkCurrent, Color.red);
+            DrawWorkingQuadFrame(xWorkPrevious, zWorkPrevious, Color.blue);
+            await Task.Yield();
         }
-
-        good_batches++;
-
-        BonomQuery(SearchQuery, xWorkCurrent, zWorkCurrent, SearchQueryRadius, true);
-        for (int i = workingQuadrant.Count - 1; i > -1; i-- )
-            workingQuadrant[i].BatchUpdate();
-
-        DrawWorkingQuadFrame(xWorkCurrent, zWorkCurrent, Color.red);
-        DrawWorkingQuadFrame(xWorkPrevious, zWorkPrevious, Color.blue);
     }
 
     private void AdvanceWorkCoords()
@@ -382,12 +403,15 @@ public class Engine : MonoBehaviour
 
         body_exp_inverse = 1f / BodyExpirationTicks;
         quad_res_inverse = 1f / QuadResolution;
+
+        MapWorkActive = true;
+        MapWorkUpdate();
+        //StartCoroutine(MapWorkUpdate());
     }
 
     // Update is called once per frame
     void Update()
     {
         SpawnUpdate();
-        MapWorkUpdate();
     }
 }

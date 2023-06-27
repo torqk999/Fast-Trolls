@@ -234,10 +234,15 @@ public class Bonom : MonoBehaviour
     private void AttackUpdate()
     {
         if (myTarget == null ||
-            LastAttack.Ticks + Stats.AttkDelayTicks > DateTime.Now.Ticks ||
-            !myTarget.Alive ||
-            !TargetAttkRange(myTarget.transform))
+            LastAttack.Ticks + Stats.AttkDelayTicks > DateTime.Now.Ticks)
             return;
+
+        if (!myTarget.Alive ||
+            !TargetAggroRange(myTarget))
+        {
+            myTarget = null;
+            return;
+        }
 
         Engine.AttackBonom(this, myTarget);
         LastAttack = DateTime.Now;
@@ -250,6 +255,7 @@ public class Bonom : MonoBehaviour
         DeathTime = Alive ? DateTime.Now : DeathTime;
         DeadQued = Alive ? false : DeadQued;
         Grounded = Alive ? Grounded : false;
+        myTarget = Alive ? myTarget : null;
         myCollider.enabled = Alive;
 
         if (!DeadQued && !Alive)
