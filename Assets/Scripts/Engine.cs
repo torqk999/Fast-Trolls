@@ -308,13 +308,13 @@ public class Engine : MonoBehaviour
         }
     }
 
-    private async void BonomWork(int index)
+    private IEnumerator BonomWork(int index)
     {
         while (BonomWorkActive)
         {
             for (int i = Teams[index].Members.Count - 1; i > -1; i--)
                 Teams[index].Members[i].SingleUpdate();
-            await Task.Yield();
+            yield return new WaitForFixedUpdate();
         }
     }
 
@@ -406,7 +406,7 @@ public class Engine : MonoBehaviour
                 color = spawnMesh.material.color;
 
             Teams[i] = new Team(this, i, color, Named ? SpawnLocations[i].name : null);
-            BonomWork(i);
+            StartCoroutine(BonomWork(i));
         }
 
         UIManager.PopulateTeamSelectionButtons();
@@ -420,9 +420,13 @@ public class Engine : MonoBehaviour
         
         MapWorkActive = true;
         MapWork();
-        //StartCoroutine(MapWorkUpdate());
     }
 
+    private void OnApplicationQuit()
+    {
+        MapWorkActive = false;
+        BonomWorkActive = false;
+    }
     // Update is called once per frame
     void Update()
     {

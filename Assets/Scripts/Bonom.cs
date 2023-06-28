@@ -152,7 +152,12 @@ public class Bonom : MonoBehaviour
     private void QuadUpdate()
     {
         if (!Alive)
+        {
+            if (myQuad != null)
+                myQuad.RemoveBonom(this);
             return;
+        }
+
         Quadrant check = Engine.GetQuad(transform.position);
         if (check != myQuad)
         {
@@ -164,7 +169,7 @@ public class Bonom : MonoBehaviour
     private void CanvasUpdate()
     {
         Canvas.transform.rotation = Engine.CameraControl.Camera.rotation;
-        HealthSlider.value = Health * health_max_inverse;// Stats.HealthMax;
+        HealthSlider.value = Health * health_max_inverse;
     }
     private void ProxyUpdate()
     {
@@ -188,20 +193,20 @@ public class Bonom : MonoBehaviour
         Bonom closest = null;
 
         for (int i = 0; i <= aggro_range; i++)
+        {
             foreach (Bonom bonom in Engine.SearchQuery[i])
             {
                 if (bonom.myTeam == myTeam)
                     continue;
-
-                //buffer_vector0 = transform.position;
-                //buffer_vector1 = bonom.transform.position;
-                //buffer_vector2 = bonom.transform.position;
 
                 if (bonom.Alive &&
                     TargetAggroRange(bonom) &&
                     (closest == null || FastDistanceGreater(closest.transform, bonom.transform, transform)))
                     closest = bonom;
             }
+            if (closest != null)
+                break;
+        }
 
         myTarget = myTarget == null ? closest : closest == null ? myTarget : FastDistanceGreater(closest.transform, myTarget.transform, transform) ? myTarget : closest;
     }
@@ -273,13 +278,12 @@ public class Bonom : MonoBehaviour
             DeadQued = true;
             Engine.Dead.Add(this);
             myTeam.RemoveBonom(this);
-            myQuad.RemoveBonom(this);
         }
 
         myTeam.DamageHealed += Health - oldHealth;
         long deathLength = DateTime.Now.Ticks - DeathTime.Ticks;
 
-        if (myDebugRenderer != null)
+        if (myDebugRenderer != null && !Alive)
         {
             float lerp = (Engine.BodyExpirationTicks - deathLength) * Engine.body_exp_inverse;
             buffer_color = myTeam.TeamColor;
