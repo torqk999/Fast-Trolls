@@ -33,7 +33,15 @@ public class UIManager : MonoBehaviour
 
     public const string BlockerTag = "UI_BLOCK";
 
-    public void PopulateTeamSelectionButtons()
+    public void UIinit(Engine engine)
+    {
+        Engine = engine;
+        PopulateTeamSelectionButtons();
+        PopulateRatioSliderPanels();
+        PopulateSquadCounterTexts();
+        TeamSelection(Engine.SelectedTeamIndex);
+    }
+    void PopulateTeamSelectionButtons()
     {
         if (Engine.Teams == null || Engine.Teams.Length < 1)
             return;
@@ -54,7 +62,7 @@ public class UIManager : MonoBehaviour
         }
     }
     
-    public void PopulateRatioSliderPanels()
+    void PopulateRatioSliderPanels()
     {
         Debug.Log($"Presets Length: {Engine.PreSets.Length}");
 
@@ -70,7 +78,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void PopulateSquadCounterTexts()
+    void PopulateSquadCounterTexts()
     {
         SquadCounts = new TMP_Text[Engine.PreSets.Length];
 
@@ -105,7 +113,7 @@ public class UIManager : MonoBehaviour
         RatioPanels[index].Sync(Engine.SelectedTeam.Squads[index]);
     }
 
-    public void TeamSelection(int teamIndex)
+    void TeamSelection(int teamIndex)
     {
         Engine.SelectedTeamIndex = teamIndex;
         SelectedNameSplash.text = Engine.Teams[Engine.SelectedTeamIndex].TeamName;

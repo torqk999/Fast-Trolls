@@ -412,10 +412,9 @@ public class Engine : MonoBehaviour
             StartCoroutine(BonomWork(i));
         }
 
-        UIManager.PopulateTeamSelectionButtons();
-        UIManager.PopulateRatioSliderPanels();
-        UIManager.PopulateSquadCounterTexts();
-        UIManager.TeamSelection(SelectedTeamIndex);
+        UIManager = GameObject.Find("GameUI").GetComponent<UIManager>();
+        Debug.Log($"UIManager found: {UIManager != null}");
+        UIManager.UIinit(this);
 
         body_exp_inverse = 1f / BodyExpirationTicks;
         quad_res_inverse = 1f / QuadResolution;
