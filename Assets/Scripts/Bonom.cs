@@ -4,13 +4,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEditor.Rendering;
 
 public class Bonom : MonoBehaviour
 {
     public Rigidbody myRigidBody;
     public Collider myCollider;
     public MeshRenderer myDebugRenderer;
-    public MeshRenderer myMainRenderer;
+    public Renderer myMainRenderer;
+    public Animator myAnimator;
     public TMP_Text NamePanel;
     public Slider HealthSlider;
     public GameObject Canvas;
@@ -61,6 +63,7 @@ public class Bonom : MonoBehaviour
         myRigidBody = gameObject.GetComponent<Rigidbody>();
         myRigidBody.velocity = Vector3.zero;
         myCollider = gameObject.GetComponent<Collider>();
+        
         Canvas = transform.GetChild(0).gameObject;
         HealthSlider = Canvas.transform.GetChild(0).GetComponent<Slider>();
         NamePanel = Canvas.transform.GetChild(1).GetComponent<TMP_Text>();
@@ -80,10 +83,28 @@ public class Bonom : MonoBehaviour
         if (Stats.Prefab == null)
             return;
 
-        GameObject newMeshObject = Instantiate(Stats.Prefab, transform.position, transform.rotation, transform);
+        GameObject newMeshObject = Instantiate(Stats.Prefab, transform.position - new Vector3(0,.9f,0), transform.rotation, transform);
         newMeshObject.SetActive(true);
-        myMainRenderer = newMeshObject.GetComponent<MeshRenderer>();
+        myAnimator = newMeshObject.GetComponent<Animator>();
+        myMainRenderer = myAnimator.transform.GetChild(0).GetComponent<Renderer>();
         myMainRenderer.material.color = myTeam.TeamColor;
+        
+    }
+    private void WalkAnimation()
+    {
+        if (myRigidBody.velocity.magnitude > 1)
+        {
+            myAnimator.SetBool("isWalking", true);
+            
+
+        }    
+
+        
+
+            else
+            {
+                myAnimator.SetBool("isWalking", false);
+            }
     }
     private bool TargetAggroRange(Bonom target)
     {
@@ -140,7 +161,8 @@ public class Bonom : MonoBehaviour
         //AttackUpdate();
     }
     public void SingleUpdate()
-    {
+    {   
+        WalkAnimation();
         CanvasUpdate();
         LifeUpdate();
         MoveUpdate();

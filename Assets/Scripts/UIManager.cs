@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     public Transform RatioPanelContainer;
     public Transform SquadCountsContainer;
 
+
     public Button[] TeamSelectors;
     public BonomRatioPanel[] RatioPanels;
     public TMP_Text[] SquadCounts;
@@ -53,7 +54,7 @@ public class UIManager : MonoBehaviour
             TeamSelectors[i].onClick.AddListener(() => TeamSelection(tempInt));
         }
     }
-    
+
     public void PopulateRatioSliderPanels()
     {
         Debug.Log($"Presets Length: {Engine.PreSets.Length}");
@@ -145,10 +146,10 @@ public class UIManager : MonoBehaviour
                     alteredPanel.RollBack();
                     return;
                 }
-                    
+
                 continue;
             }
-                
+
             if (squad.Locked)
                 reserved += squad.Ratio;
 
@@ -161,7 +162,7 @@ public class UIManager : MonoBehaviour
         int postSign = Math.Sign(adjustedDelta);
         adjustedDelta = preSign == postSign ? adjustedDelta : 0;
 
-        foreach(Squad squad in unlocked)
+        foreach (Squad squad in unlocked)
         {
             squad.Ratio -= adjustedDelta / unlocked.Count;
             squad.Ratio = squad.Ratio < 0 ? 0 : squad.Ratio;
@@ -172,14 +173,14 @@ public class UIManager : MonoBehaviour
 
         SyncSliders();
     }
-
+ 
     private void StatUpdate()
     {
         if (LastStatRefresh + new TimeSpan(0,0,StatRefreshDelaySeconds) > DateTime.Now)
             return;
 
         LastStatRefresh = DateTime.Now;
-        SelectedTeamStats.text = $"DmgDealt: {Engine.SelectedTeam.DamageDealt} | DmgRecieved: {Engine.SelectedTeam.DamageRecieved} \n DmgHealed: {Engine.SelectedTeam.DamageHealed} | KillCount: {Engine.SelectedTeam.KillCount}";
+        SelectedTeamStats.text = $"DmgDealt: {Engine.SelectedTeam.DamageDealt}  DmgRecieved: {Engine.SelectedTeam.DamageRecieved} \nDmgHealed: {Engine.SelectedTeam.DamageHealed}  KillCount: {Engine.SelectedTeam.KillCount}";
     }
 
     private void NumberCheck()
