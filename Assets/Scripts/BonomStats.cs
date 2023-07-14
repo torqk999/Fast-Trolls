@@ -2,13 +2,6 @@
 using Unity;
 using UnityEngine;
 
-/*public enum BonomType
-{
-    Melee,
-    Ranged,
-    Mage
-}*/
-
 [Serializable]
 public struct BonomStats
 {
