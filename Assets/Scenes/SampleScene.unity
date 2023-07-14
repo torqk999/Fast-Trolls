@@ -3761,6 +3761,7 @@ MonoBehaviour:
   Named: 0
   debug: 1
   MapWorkActive: 0
+  BonomWorkActive: 0
   MapInit: 0
 --- !u!4 &1897847843
 Transform:

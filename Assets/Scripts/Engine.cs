@@ -10,10 +10,16 @@ public class Engine : MonoBehaviour
     public int xRoot, zRoot;
     public int xWidth, zWidth;
     public int QuadResolution;
+
     private int xWorkCurrent, zWorkCurrent;
     private int xWorkPrevious, zWorkPrevious;
     private int good_batches;
     private float quad_res_inverse;
+
+    private Vector3 o;
+    private Vector3 x;
+    private Vector3 z;
+    private Vector3 O;
 
     public List<Bonom> Dead = new List<Bonom>();
     public List<Bonom>[] SearchQuery;
@@ -326,10 +332,7 @@ public class Engine : MonoBehaviour
         xWorkCurrent = xWorkCurrent >= QuadMap.GetLength(0) ? 0 : xWorkCurrent; // X roll-over
     }
 
-    Vector3 o;
-    Vector3 x;
-    Vector3 z;
-    Vector3 O;
+    
 
     private void DrawWorkingQuadFrame(int xCoord, int zCoord, Color color)
     {
