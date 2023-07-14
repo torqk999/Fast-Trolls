@@ -185,6 +185,7 @@ public class Engine : MonoBehaviour
     {
         int damagedCount = 0;
         int xCoord, zCoord;
+
         GetCoords(target.transform.position, out xCoord, out zCoord);
         BonomQuery(AOEQuery, xCoord, zCoord, attacker.attk_radius);
 
@@ -223,6 +224,7 @@ public class Engine : MonoBehaviour
 
         newBonomObject.SetActive(true);
         newBonomObject.GetComponent<Renderer>().enabled = debug;
+        newBonomObject.GetComponentInChildren<ParticleSystem>().Play();
 
         requestingTeam.AddBonom(newBonom, random);
 
