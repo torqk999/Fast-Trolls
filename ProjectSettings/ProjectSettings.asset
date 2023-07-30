@@ -766,6 +766,7 @@ PlayerSettings:
   XboxOneOverrideIdentityPublisher: 
   vrEditorSettings: {}
   cloudServicesEnabled:
+    Build: 0
     UNet: 1
   luminIcon:
     m_Name: 
@@ -780,11 +781,11 @@ PlayerSettings:
     m_VersionName: 
   apiCompatibilityLevel: 6
   activeInputHandler: 0
-  cloudProjectId: 
+  cloudProjectId: c83c09db-cad1-4555-89a7-55679fa33ccd
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: 
-  organizationId: 
+  projectName: NetCodeTestWorld
+  organizationId: hisnamehappenstobe
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   playerDataPath: 

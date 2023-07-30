@@ -24,7 +24,7 @@ public struct BonomStats
     public float MoveAccel;
     public float TurnSpeed;
 
-    public BonomStats(
+    /*public BonomStats(
         string bonomType,
         Sprite bonomSprite,
         GameObject prefab,
@@ -63,5 +63,5 @@ public struct BonomStats
         MoveSpeed = moveSpeed;
         MoveAccel = moveAccel;
         TurnSpeed = turnSpeed;
-    }
+    }*/
 }

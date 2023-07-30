@@ -2,102 +2,103 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[Serializable]
 public class Team
 {
-    public string TeamName;
-    public int TeamIndex;
-    public DateTime LastSpawn;
-    public Color TeamColor;
-    public List<Bonom> Members = new List<Bonom>();
-    public Engine Engine;
-    public Flag Flag;
-    public Squad[] Squads;
+    public TeamStats Stats;
+    public long LastSpawn;
 
+    public GameObject Flag;
+    public GameObject Base;
+
+    public Dictionary<string, Squad> Squads;
+    public int MemberCount {get
+        {
+            int total = 0;
+            foreach (Squad squad in Squads.Values)
+                total += squad.Members.Count;
+            return total;
+        } }
     public float DamageDealt = 0;
     public float DamageRecieved = 0;
     public float DamageHealed = 0;
     public int KillCount = 0;
 
-    public Team(Engine engine, int teamIndex, Color teamColor, string teamName = null)
+    BonomStats stat_buffer;
+
+    public Team(TeamStats stats)
     {
-        Engine = engine;
-        TeamName = teamName == null ? $"Team {teamIndex}" : teamName;
-        TeamIndex = teamIndex;
-        TeamColor = teamColor;
-        LastSpawn = DateTime.Now;
-        Flag = Engine.GenerateTeamFlag(this);
-        Squads = new Squad[engine.PreSets.Length];
+        Stats = stats;
+        Flag = Game.GenerateNewFlag(this);
+        Base = Game.GenerateNewBase(this);
+        Squads = new Dictionary<string, Squad>();
         float sum = 0;
-        float init = 1f / Squads.Length;
+        int presetCount = Game.Instance.BonomPresets.Length;
+        float init = 1f / presetCount;
         Debug.Log(init);
-        for (int i = 0; i < Squads.Length; i++)
+
+        for (int i = 0; i < presetCount; i++)
         {
-            Squads[i] = new Squad(i, i < Squads.Length - 1 ? init : 1 - sum);
+            Squads.Add(Game.Instance.BonomPresets[i].Type, new Squad(this, i < presetCount - 1 ? init : 1 - sum));
             sum += init;
         } 
     }
 
     private BonomStats NeededStats()
     {
-        for (int i = 0; i < Squads.Length; i++)
+        for (int i = 0; i < Game.Instance.BonomPresets.Length; i++)
         {
-            if (Squads[i].Ratio == 0)
+            Squad check = Squads[Game.Instance.BonomPresets[i].Type];
+
+            if (check.Ratio == 0)
                 continue;
 
-            float currentRatio = (float)Squads[i].Count / Members.Count;
+            if (MemberCount == 0)
+                return Game.Instance.BonomPresets[i];
 
-            if (Members.Count == 0 ||
-                Squads[i].Count == 0 ||
-                currentRatio < Squads[i].Ratio)
-            {
-                return Engine.PreSets[i];
-            }
-                
+            float currentRatio = (float)check.Count / MemberCount;
+
+            if (currentRatio < check.Ratio)
+                return Game.Instance.BonomPresets[i];    
         }
 
-        return Engine.PreSets[0]; // fail-safe
+        return Game.Instance.BonomPresets[0]; // fail-safe
     }
 
-    public void AddBonom(Bonom newBonom, bool random = false)
+    public Vector3 SpawnLocation()
     {
-        newBonom.Init(Engine, this, random ? Engine.RandomBonomStats() : NeededStats());
-        Members.Add(newBonom);
-        Squad targetSquad = this[Engine.GetTypeIndex(newBonom.Stats.Type)];
-        targetSquad.Count++;
+        Vector3 location = Stats.SpawnLocation.position;
 
-        Engine.UIManager.CountUpdate(this);
+        location.x += ((UnityEngine.Random.value * 2) - 1) * Game.Instance.SpawnRadius;
+        location.z += ((UnityEngine.Random.value * 2) - 1) * Game.Instance.SpawnRadius;
+
+        return location;
     }
 
-    public void RemoveBonom(Bonom targetBonom)
+    public Bonom AddBonom(bool random = false)
     {
-        if (Members.Remove(targetBonom))
-            this[Engine.GetTypeIndex(targetBonom.Stats.Type)].Count--;
-    }
+        stat_buffer = random ? Game.RandomBonomStats() : NeededStats();
+        Bonom newBonom;
+        Squad targetSquad = Squads[stat_buffer.Type];
 
-    public int SquadIndex(int type)
-    {
-        for (int i = 0; i < Squads.Length; i++)
-            if (Squads[i].TypeIndex == type)
-                return i;
-        return -1;
-    }
-
-    public Squad this[int type]
-    {
-        get
+        if (!targetSquad.RecycleBonom(out newBonom))
         {
-            for (int i = 0; i < Squads.Length; i++)
-                if (Squads[i].TypeIndex == type)
-                    return Squads[i];
-            return null;
+            newBonom = Game.GenerateNewBonom();
+            newBonom.Init(targetSquad, stat_buffer);
         }
 
-        set
-        {
-            for (int i = 0; i < Squads.Length; i++)
-                if (Squads[i].TypeIndex == type)
-                    Squads[i] = value;
-        }
+        Squads[stat_buffer.Type].Members.Add(newBonom);
+        newBonom.gameObject.SetActive(true);
+        newBonom.Refresh();
+
+        Game.UIManager.CountUpdate(this);
+
+        return newBonom;
+    }
+
+    public Squad this[string type]
+    {
+        get { return Squads[type]; }
+
+        set { Squads[type] = value; }
     }
 }

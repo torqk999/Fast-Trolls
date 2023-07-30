@@ -4,27 +4,25 @@ using TMPro;
 
 public class BonomRatioPanel : MonoBehaviour
 {
-    public UIManager Manager;
     public Squad Squad;
 
     public TMP_Text Percent;
     public Slider Slider;
     public Button Lock;
 
-    public int TypeIndex;
-    public Image TypeSprite;
+    public string Type;
+    public Image ThumbNail;
 
     private float slider_cache = 0;
 
     public float Delta => Slider.value - slider_cache;
 
-    public void Init(UIManager manager, BonomStats stats, Squad squad)
+    public void Init(BonomStats stats)
     {
-        Manager = manager;
-        TypeIndex = Manager.Engine.GetTypeIndex(stats.Type);
-        TypeSprite.sprite = stats.Sprite;
-        Sync(squad);
-        Lock.onClick.AddListener(() => Manager.RatioSliderLockToggle(this));
+        Type = stats.Type;
+        ThumbNail.sprite = stats.Sprite;
+        //Sync(squad);
+        Lock.onClick.AddListener(() => Game.UIManager.RatioSliderLockToggle(this));
     }
 
     public void RollBack()
@@ -42,7 +40,7 @@ public class BonomRatioPanel : MonoBehaviour
         Slider.value = Squad.Ratio;
         slider_cache = Squad.Ratio;
         Percent.text = (Squad.Ratio * 100).ToString("N0");
-        Lock.gameObject.GetComponent<Image>().sprite = Squad.Locked ? Manager.Locked : Manager.Unlocked;
+        Lock.gameObject.GetComponent<Image>().sprite = Squad.Locked ? Game.UIManager.Locked : Game.UIManager.Unlocked;
     }
 
     private void Update()
@@ -50,7 +48,7 @@ public class BonomRatioPanel : MonoBehaviour
         if (Slider != null && Slider.value != slider_cache)
         {
             Debug.Log($"Slider delta: {Delta}");
-            Manager.RatioSliderUpdate(this);
+            Game.UIManager.RatioSliderUpdate(this);
             slider_cache = Slider.value;
         }
     }

@@ -5,142 +5,122 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEditor.Rendering;
+using Unity.Netcode;
 
-public class Bonom : MonoBehaviour
+public partial class Bonom : MonoBehaviour
 {
-    public Rigidbody myRigidBody;
-    public Collider myCollider;
+    public Rigidbody RigidBody;
+    public Collider Collider;
     public MeshRenderer myDebugRenderer;
     public Renderer myMainRenderer;
     public Animator myAnimator;
-    public TMP_Text NamePanel;
-    public Slider HealthSlider;
-    public GameObject Canvas;
+    public BonomCanvas myCanvas;
 
-    public Engine Engine;
-    public Team myTeam;
+    public Team myTeam => mySquad == null ? null : mySquad.parentTeam;
+    public Squad mySquad;
     public Quadrant myQuad;
     public Bonom myTarget;
+    private Bonom Closest;
     public BonomStats Stats;
 
-    public DateTime DeathTime;
-    public DateTime LastAttack;
+    
+    public long DeathTime;
+    public long LastAttack;
     public float Health;
 
-    private bool DeadQued = false;
-    public bool Grounded = false;
+    public bool Recycled;
+    public bool Grounded;
+    public bool IN_RANGE;
 
+    public Vector3 MOVE_VECTOR;
 
     private int aggro_range;
     private int attk_range;
     public int attk_radius;
 
-    private List<Bonom> proxy_query = new List<Bonom>();
+    //private List<Bonom> proxy_query = new List<Bonom>();
 
     private float health_max_inverse;
-    private Vector3 buffer_vector0;
-    private Vector3 buffer_vector1;
-    private Vector3 buffer_vector2;
-    private Color buffer_color;
 
+    private static double Avoidance;
+    private static Vector2 v2_buff_0;
+    private static Vector2 v2_buff_1;
+    private static Vector2 v2_buff_2;
+    private static Vector3 v3_buff_0;
+    private static Color buffer_color;
+
+    public float HealthPercent => Health * health_max_inverse;
     public bool Alive => Health > 0;
-    public int TeamIndex => myTeam == null ? -1 : myTeam.TeamIndex;
+    public bool InPlay => transform.position.y > Game.Instance.DeathHeight;
 
-    public void Init(Engine engine, Team team, BonomStats stats)
+    public void Init(Squad squad, BonomStats stats)
     {
-        Engine = engine;
         Stats = stats;
-        myTeam = team;
-        myTarget = null;
-        DeadQued = false;
+        mySquad = squad;
 
-        Health = Stats.HealthMax;
         health_max_inverse = 1 / Stats.HealthMax;
-        aggro_range = (int)(Stats.AggroRange / Engine.QuadResolution);
-        attk_range = (int)(Stats.AttkRange / Engine.QuadResolution);
-        attk_radius = (int)(Stats.AttkRadius / Engine.QuadResolution);
+        aggro_range = (int)(Stats.AggroRange / Game.QuadResolution) + 1;
+        attk_range = (int)(Stats.AttkRange / Game.QuadResolution) + 1;
+        attk_radius = (int)(Stats.AttkRadius / Game.QuadResolution) + 1;
 
-        myRigidBody = gameObject.GetComponent<Rigidbody>();
-        myRigidBody.velocity = Vector3.zero;
-        myCollider = gameObject.GetComponent<Collider>();
-        
-        Canvas = transform.GetChild(0).gameObject;
-        HealthSlider = Canvas.transform.GetChild(0).GetComponent<Slider>();
-        NamePanel = Canvas.transform.GetChild(1).GetComponent<TMP_Text>();
-        NamePanel.text = Stats.Type.ToString();
+        RigidBody = gameObject.GetComponent<Rigidbody>();
+        Collider = gameObject.GetComponent<Collider>();
 
         QuadUpdate();
         MeshInit();
     }
+    public void Refresh()
+    {
+        myTarget = null;
+        Recycled = false;
+        Health = Stats.HealthMax;
+        RigidBody.velocity = Vector3.zero;
+        transform.position = myTeam == null ? transform.position : myTeam.SpawnLocation();
+        Collider.enabled = true;
+        gameObject.GetComponentInChildren<ParticleSystem>().Play();
+    }
+
     private void MeshInit()
     {
         if (myMainRenderer != null)
             Destroy(myMainRenderer.gameObject);
 
         myDebugRenderer = gameObject.GetComponent<MeshRenderer>();
-        myDebugRenderer.material.color = myTeam.TeamColor;
+        myDebugRenderer.enabled = Game.Instance.debug;
+        myDebugRenderer.material.color = myTeam.Stats.TeamColor;
 
-        if (Stats.Prefab == null)
-            return;
-
-        GameObject newMeshObject = Instantiate(Stats.Prefab, transform.position - new Vector3(0,.9f,0), transform.rotation, transform);
+        GameObject newMeshObject = Instantiate(Stats.Prefab == null ? Game.Instance.PrefabDefaultBonom : Stats.Prefab, transform.position - new Vector3(0, .9f, 0), transform.rotation, transform);
         newMeshObject.SetActive(true);
         myAnimator = newMeshObject.GetComponent<Animator>();
         myMainRenderer = myAnimator.transform.GetChild(0).GetComponent<Renderer>();
-        myMainRenderer.material.color = myTeam.TeamColor;
-        
+        myMainRenderer.material.color = myTeam.Stats.TeamColor;
+
     }
     private void WalkAnimation()
     {
-        if (myRigidBody.velocity.magnitude > 1)
+        if (myAnimator == null)
+            return;
+
+        if (RigidBody.velocity.magnitude > 1 && Fast.FastDistance(transform, Game.CameraControl.Camera) < Game.anim_distance_squared)
         {
             myAnimator.SetBool("isWalking", true);
-            
+        }
 
-        }    
-
-        
-
-            else
-            {
-                myAnimator.SetBool("isWalking", false);
-            }
+        else
+        {
+            myAnimator.SetBool("isWalking", false);
+        }
     }
+
     private bool TargetAggroRange(Bonom target)
     {
-        buffer_vector0 = target.transform.position;
-        buffer_vector1 = transform.position;
-        return FastDistance(ref buffer_vector0, ref buffer_vector1) < Math.Pow(Stats.AggroRange, 2);
+        return Fast.FastDistance(transform, target.transform) < Math.Pow(Stats.AggroRange, 2);
     }
     private bool TargetAttkRange(Transform target)
     {
-        buffer_vector0 = target.position;
-        buffer_vector1 = transform.position;
-        return FastDistance(ref buffer_vector0, ref buffer_vector1) < Math.Pow(Stats.AttkRange, 2);
+        return Fast.FastDistance(transform, target) < Math.Pow(Stats.AttkRange, 2);
     }
-    private bool FastDistanceGreater(Transform a, Transform b, Transform source)
-    {
-        buffer_vector0 = source.position;
-        buffer_vector1 = a.position;
-        buffer_vector2 = b.position;
-        return FastDistanceGreater(ref buffer_vector1, ref buffer_vector2, ref buffer_vector0);
-    }
-    private bool FastDistanceGreater(ref Vector3 a, ref Vector3 b, ref Vector3 source)
-    {
-        return FastDistance(ref a, ref source) > FastDistance(ref b, ref source);
-    }
-    //private bool FastDistanceGreater(Vector3 a, Vector3 b, float c)
-    //{
-    //    return FastDistance(ref a, ref b) > Math.Pow(c, 2);
-    //}
-    private double FastDistance(ref Vector3 a, ref Vector3 b)
-    {
-        return Math.Pow(a.x - b.x, 2) + Math.Pow(a.y - b.y, 2) + Math.Pow(a.z - b.z, 2);
-    }
-    private double FastDistance(ref Vector3 v)
-    {
-        return Math.Pow(v.x, 2) + Math.Pow(v.y, 2) + Math.Pow(v.z, 2);
-    }
+
     //private void OnCollisionStay(Collision collision)
     //{
     //    Grounded = collision.transform.tag == "GROUND" ? true : Grounded;
@@ -153,19 +133,25 @@ public class Bonom : MonoBehaviour
     {
         Grounded = collision.transform.tag == "GROUND" ? false : Grounded;
     }
+
     public void BatchUpdate()
     {
-        ProxyUpdate();
         TargetUpdate();
         QuadUpdate();
-        //AttackUpdate();
+    }
+    public void NetworkUpdate()
+    {
+
     }
     public void SingleUpdate()
-    {   
-        WalkAnimation();
-        CanvasUpdate();
+    {
         LifeUpdate();
-        MoveUpdate();
+
+        if (!Grounded)
+            return;
+
+        WalkAnimation();
+        IN_RANGE = MoveUpdate();
         TurnUpdate();
         AttackUpdate();
     }
@@ -180,7 +166,7 @@ public class Bonom : MonoBehaviour
             return;
         }
 
-        Quadrant check = Engine.GetQuad(transform.position);
+        Quadrant check = Game.GetQuad(transform.position);
         if (check != myQuad)
         {
             if (myQuad != null)
@@ -188,90 +174,92 @@ public class Bonom : MonoBehaviour
             check.AddBonom(this);
         }
     }
-    private void CanvasUpdate()
-    {
-        Canvas.transform.rotation = Engine.CameraControl.Camera.rotation;
-        HealthSlider.value = Health * health_max_inverse;
-    }
-    private void ProxyUpdate()
-    {
-        proxy_query.Clear();
-        for (int i = 0; i <= Engine.ProxyRadius; i++)
-            proxy_query.AddRange(Engine.SearchQuery[i]);
-    }
     private void TargetUpdate()
     {
+        if (!Alive ||
+            myQuad == null)
+        {
+            myTarget = null;
+            return;
+        }
+
         if (myTarget != null &&
            (!myTarget.Alive ||
             !TargetAggroRange(myTarget)))
             myTarget = null;
 
-        if (myTarget != null)
-            Debug.DrawLine(transform.position, myTarget.transform.position, Color.black);
+        
 
         if (myTarget != null && TargetAttkRange(myTarget.transform))
             return;
 
-        Bonom closest = null;
+        Game.QuadRadiusProcess(myQuad, aggro_range, FindNewTarget);
 
-        for (int i = 0; i <= aggro_range; i++)
-        {
-            foreach (Bonom bonom in Engine.SearchQuery[i])
-            {
-                if (bonom.myTeam == myTeam)
-                    continue;
-
-                if (bonom.Alive &&
-                    TargetAggroRange(bonom) &&
-                    (closest == null || FastDistanceGreater(closest.transform, bonom.transform, transform)))
-                    closest = bonom;
-            }
-            if (closest != null)
-                break;
-        }
-
-        myTarget = myTarget == null ? closest : closest == null ? myTarget : FastDistanceGreater(closest.transform, myTarget.transform, transform) ? myTarget : closest;
+        myTarget = myTarget == null ? Closest : Closest == null ? myTarget : Fast.FastDistanceGreater(Closest.transform, myTarget.transform, transform) ? myTarget : Closest;
     }
     private void TurnUpdate()
     {
-        buffer_vector0 = myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position;
-        buffer_vector0 -= transform.position;
-        buffer_vector0.y = 0;
+        v3_buff_0 = myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position;
+        Fast.Write3to2(ref v3_buff_0, ref v2_buff_0);
+        Fast.WritePosToBuffer(transform, ref v2_buff_1);
+        //v2_buff_1 = transform.position;
+        v2_buff_0 -= v2_buff_1;
+        //v2_buff_0.y = 0;
 
         Quaternion facing = transform.rotation;
-        Quaternion bearing = Quaternion.LookRotation(buffer_vector0, Vector3.up);
+        Fast.Write2to3(ref v2_buff_0, ref v3_buff_0);
+        Quaternion bearing = Quaternion.LookRotation(v3_buff_0, Vector3.up);
 
         transform.rotation = Quaternion.Lerp(facing, bearing, Stats.TurnSpeed);
     }
-    private void MoveUpdate()
+    private bool MoveUpdate()
     {
-        if ((myTarget != null && TargetAttkRange(myTarget.transform)) ||
-            TargetAttkRange(myTeam.Flag.transform))
-            return;
-
-        buffer_vector0 = (myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position) - transform.position;
-        float turnFactor = Vector3.Dot(buffer_vector0, transform.forward);
-        double avoidance = FastDistance(ref buffer_vector0);
-        avoidance = avoidance > Engine.AvoidanceMax ? Engine.AvoidanceMax : avoidance;
-
-        foreach (Bonom proxy in proxy_query)
+        if (myQuad == null)
         {
-            if (proxy == this || proxy == myTarget || !proxy.Alive)
-                continue;
-
-            buffer_vector1 = proxy.transform.position - transform.position;
-            buffer_vector0 -= buffer_vector1.normalized * (float)(avoidance / FastDistance(ref buffer_vector1));
+            MOVE_VECTOR = Vector3.zero;
+            return false;
         }
 
-        buffer_vector0 = (buffer_vector0.normalized * Stats.MoveSpeed) - myRigidBody.velocity;
-        buffer_vector0 = buffer_vector0.normalized * Stats.MoveAccel * turnFactor;
+        if ((myTarget != null && TargetAttkRange(myTarget.transform)) ||
+            TargetAttkRange(myTeam.Flag.transform))
+        {
+            MOVE_VECTOR = Vector3.zero;
 
-        myRigidBody.AddForce(buffer_vector0);
+            if (!IN_RANGE)
+                Debug.DrawLine(transform.position, myTarget != null ? myTarget.transform.position : myTeam.Flag.transform.position, Color.black, 0.1f);
+
+            return true;
+        }
+
+
+        v3_buff_0 = (myTarget == null ? myTeam.Flag.transform.position : myTarget.transform.position) - transform.position;
+        Fast.Write3to2(ref v3_buff_0, ref v2_buff_2);
+        v3_buff_0 = transform.forward;
+        Fast.Write3to2(ref v3_buff_0, ref v2_buff_1);
+        float turnFactor = Vector2.Dot(v2_buff_2, v2_buff_1);
+        Avoidance = Fast.FastDistance(ref v2_buff_2);
+        double avoidMaxSquared = Game.Instance.AvoidanceMax * Game.Instance.AvoidanceMax;
+        Avoidance = Avoidance > avoidMaxSquared ? avoidMaxSquared : Avoidance;
+
+        Game.QuadAreaProcess(myQuad, Game.Instance.ProxyRadius, AddAvoidanceDisplacement);
+            
+        v3_buff_0 = RigidBody.velocity;
+        Fast.Write3to2(ref v3_buff_0, ref v2_buff_1);
+        v2_buff_2 = (v2_buff_2.normalized * Stats.MoveSpeed) - v2_buff_1;
+        float scale = Stats.MoveAccel * turnFactor;
+        //scale = scale < MIN_VECTOR_MAGNITUDE ? MIN_VECTOR_MAGNITUDE : scale;
+        v2_buff_2 = v2_buff_2.normalized * scale;
+        Fast.Write2to3(ref v2_buff_2, ref v3_buff_0);
+
+        MOVE_VECTOR = v3_buff_0;
+        //myRigidBody.velocity = v3_buff_0;
+        RigidBody.AddForce(v3_buff_0, ForceMode.Acceleration);
+        return false;
     }
     private void AttackUpdate()
     {
         if (myTarget == null ||
-            LastAttack.Ticks + Stats.AttkDelayTicks > DateTime.Now.Ticks)
+            LastAttack + Stats.AttkDelayTicks > Game.GameTime)
             return;
 
         if (!myTarget.Alive ||
@@ -281,41 +269,94 @@ public class Bonom : MonoBehaviour
             return;
         }
 
-        Engine.AttackBonom(this, myTarget);
-        LastAttack = DateTime.Now;
+        if (Stats.AttkRadius > 0)
+            AOEAttack();
+        else
+            Game.AttackBonom(this, myTarget);
+
+        LastAttack = Game.GameTime;
+    }
+    private void AOEAttack()
+    {
+        Game.QuadAreaProcess(myQuad, attk_radius, AOEQuadProc);
     }
     private void LifeUpdate()
     {
         float oldHealth = Health;
-        Health += Alive ? Stats.HealthRegen : 0;
+        Health += Alive ? (Stats.HealthRegen * Game.health_reg_inverse) : 0;
         Health = Health < 0 ? 0 : Health > Stats.HealthMax ? Stats.HealthMax : Health;
-        DeathTime = Alive ? DateTime.Now : DeathTime;
-        DeadQued = Alive ? false : DeadQued;
+        DeathTime = Alive ? Game.GameTime : DeathTime;
+        Recycled = Alive ? false : Recycled;
         Grounded = Alive ? Grounded : false;
-        myTarget = Alive ? myTarget : null;
-        myCollider.enabled = Alive;
-
-        if (!DeadQued && !Alive)
-        {
-            DeadQued = true;
-            Engine.Dead.Add(this);
-            myTeam.RemoveBonom(this);
-        }
+        Collider.enabled = Alive;
 
         myTeam.DamageHealed += Health - oldHealth;
-        long deathLength = DateTime.Now.Ticks - DeathTime.Ticks;
 
-        if (myDebugRenderer != null && !Alive)
+        if (!Alive)
+            RenderFade(); // <<< NEEDS WORK
+
+        if (!Recycled && !InPlay)
         {
-            float lerp = (Engine.BodyExpirationTicks - deathLength) * Engine.body_exp_inverse;
-            buffer_color = myTeam.TeamColor;
-            buffer_color.a = lerp;
-            myDebugRenderer.material.color = buffer_color;
+            Recycled = true;
+            mySquad.KillBonom(this);
+            gameObject.SetActive(false);
+        }
+    }
+
+    private bool FindNewTarget(Quadrant quad)
+    {
+        Closest = null;
+
+        foreach (Bonom bonom in quad)
+        {
+            if (bonom.myTeam == myTeam)
+                continue;
+
+            if (bonom.Alive &&
+                TargetAggroRange(bonom) &&
+                (Closest == null || Fast.FastDistanceGreater(Closest.transform, bonom.transform, transform)))
+                Closest = bonom;
         }
 
-        gameObject.SetActive(Alive || Engine.BodyExpirationTicks - deathLength > 0);
+        return Closest != null;
+    }
+    private void AddAvoidanceDisplacement(Quadrant quad)
+    {
+        foreach (Bonom proxy in quad)
+        {
+            if (proxy == this || proxy == myTarget || !proxy.Alive)
+                continue;
+
+            v3_buff_0 = proxy.transform.position - transform.position;
+            Fast.Write3to2(ref v3_buff_0, ref v2_buff_1);
+            v2_buff_2 -= v2_buff_1.normalized * (float)(Avoidance / Fast.FastDistance(ref v2_buff_1));
+        }
+    }
+    private void AOEQuadProc(Quadrant quad)
+    {
+        foreach (Bonom enemy in quad)
+        {
+            float distance = Vector3.Distance(enemy.transform.position, myTarget.transform.position);
+            if (distance <= Stats.AttkRadius)
+            {
+                Game.AttackBonom(this, enemy);
+            }
+        }
     }
     #endregion
+
+    void RenderFade()
+    {
+        return;
+
+        long deathLength = Game.GameTime - DeathTime;
+        float lerp = (Game.Instance.BodyExpirationTicks - deathLength) * Game.body_exp_inverse;
+        buffer_color = myTeam.Stats.TeamColor;
+        buffer_color.a = lerp;
+
+        myDebugRenderer.material.color = buffer_color;
+        myMainRenderer.material.color = buffer_color;
+    }
 
     // Start is called before the first frame update
     void Start()
